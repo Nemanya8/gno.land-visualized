@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gnolang/gno/gnovm/pkg/gnomod"
 )
@@ -21,6 +22,10 @@ func getMonorepoPackages() []ExtendedPkg {
 
 	extendedPkgs := make([]ExtendedPkg, len(pkgs))
 	for i, pkg := range pkgs {
+
+		//Maybe also remove examples/
+		pkg.Dir = strings.TrimPrefix(pkg.Dir, "../gno/")
+
 		extendedPkgs[i] = ExtendedPkg{
 			Pkg:     pkg,
 			Creator: "monorepo",
