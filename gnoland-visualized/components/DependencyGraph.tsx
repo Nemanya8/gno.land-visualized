@@ -11,7 +11,7 @@ interface DependencyGraphProps {
 }
 
 interface GraphData {
-  nodes: { id: string; name: string; val: number; color?: string }[]
+  nodes: { id: string; dir: string; val: number; color?: string }[]
   links: { source: string; target: string; color?: string }[]
 }
 
@@ -36,14 +36,14 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
     })
 
     const nodes = packages.map((pkg) => ({
-      id: pkg.Name,
-      name: pkg.Name,
-      val: importCounts[pkg.Name] ? importCounts[pkg.Name] + 1 : 1,
+      id: pkg.Dir,
+      dir: pkg.Dir,
+      val: importCounts[pkg.Dir] ? importCounts[pkg.Dir] + 1 : 1,
     }))
 
     const links = packages.flatMap((pkg) =>
       pkg.Imports.map((imp) => ({
-        source: pkg.Name,
+        source: pkg.Dir,
         target: imp,
       })),
     )

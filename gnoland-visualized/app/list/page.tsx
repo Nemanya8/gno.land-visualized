@@ -54,7 +54,7 @@ const PackageList: React.FC = () => {
       <h1>Package List</h1>
       <ul>
         {packages.map((pkg) => (
-          <li key={pkg.Name}>{pkg.Dir}</li>
+          <li key={pkg.Dir}>{pkg.Name}</li>
         ))}
       </ul>
     </div>

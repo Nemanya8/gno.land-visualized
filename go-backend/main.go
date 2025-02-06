@@ -9,6 +9,13 @@ import (
 func main() {
 	packages := getMonorepoPackages()
 
+	var indexerPckgs, err = getIndexerPackages()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	packages = append(packages, indexerPckgs...)
+
 	SetPackagesData(packages)
 
 	http.HandleFunc("/getAllPackages", enableCORS(GetAllPackages))

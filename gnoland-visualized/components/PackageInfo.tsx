@@ -13,13 +13,13 @@ export default function PackageInfo({ packages }: PackageInfoProps) {
 
   useEffect(() => {
     const handlePackageSelect = (event: CustomEvent) => {
-      const packageName = event.detail
-      const pkg = packages.find((p) => p.Name === packageName)
+      const packageDir = event.detail
+      const pkg = packages.find((p) => p.Dir === packageDir)
       if (pkg) {
         setSelectedPackage(pkg)
 
         const importingPackages = packages.filter((p) =>
-          p.Imports.includes(pkg.Name)
+          p.Imports.includes(pkg.Dir)
         )
         setPackagesImportingThis(importingPackages)
       } else {
@@ -42,6 +42,7 @@ export default function PackageInfo({ packages }: PackageInfoProps) {
   return (
     <div className="p-4 rounded shadow">
       <h2 className="text-xl font-bold mb-2">{selectedPackage.Name}</h2>
+      <h2 className="text-lg font-bold mb-2">{selectedPackage.Dir}</h2>
       <p>
         <strong>Creator:</strong> {selectedPackage.Creator}
       </p>
@@ -60,7 +61,7 @@ export default function PackageInfo({ packages }: PackageInfoProps) {
       {packagesImportingThis.length > 0 ? (
         <ul className="list-disc list-inside">
           {packagesImportingThis.map((pkg, index) => (
-            <li key={index}>{pkg.Name}</li>
+            <li key={index}>{pkg.Dir}</li>
           ))}
         </ul>
       ) : (

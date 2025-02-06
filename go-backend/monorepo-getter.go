@@ -24,7 +24,12 @@ func getMonorepoPackages() []ExtendedPkg {
 	for i, pkg := range pkgs {
 
 		//Maybe also remove examples/
-		pkg.Dir = strings.TrimPrefix(pkg.Dir, "../gno/")
+		pkg.Dir = strings.TrimPrefix(pkg.Dir, "../gno/examples/")
+
+		parts := strings.Split(pkg.Name, "/")
+		if len(parts) > 0 {
+			pkg.Name = parts[len(parts)-1]
+		}
 
 		extendedPkgs[i] = ExtendedPkg{
 			Pkg:     pkg,
