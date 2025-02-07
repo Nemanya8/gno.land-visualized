@@ -30,7 +30,7 @@ const PackageList: React.FC = () => {
         const fetchedPackages = await getPackages()
         setPackages(fetchedPackages)
       } catch (error) {
-        setError("Failed to fetch packages")
+        setError("Failed to fetch packages" + error)
       } finally {
         setLoading(false)
       }

@@ -17,7 +17,6 @@ interface GraphData {
 
 export default function DependencyGraph({ packages }: DependencyGraphProps) {
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] })
-  const [highlightNodes, setHighlightNodes] = useState(new Set())
   const [highlightLinks, setHighlightLinks] = useState(new Set())
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [importedNodes, setImportedNodes] = useState(new Set())
@@ -55,7 +54,6 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
     (node: any) => {
       if (selectedNode === node.id) {
         // If clicking the same node, reset highlights
-        setHighlightNodes(new Set())
         setHighlightLinks(new Set())
         setImportedNodes(new Set())
         setImportingNodes(new Set())
@@ -78,7 +76,6 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
             importingNodes.add((link.source as any).id)
           }
         })
-        setHighlightNodes(connectedNodes)
         setHighlightLinks(connectedLinks)
         setImportedNodes(importedNodes)
         setImportingNodes(importingNodes)
@@ -96,7 +93,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
       if (importingNodes.has(node.id)) return "#ffff00"
       return "#2B65EC"
     },
-    [highlightNodes, selectedNode, importedNodes, importingNodes],
+    [ selectedNode, importedNodes, importingNodes],
   )
 
   const updateLinkColor = useCallback(

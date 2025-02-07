@@ -32,14 +32,25 @@ cd gno.land-visualized
 ```bash
 git clone https://github.com/gnolang/gno.git
 ```
-3. Install dependencies
 
-4. Start the Go backend server by running:
+3. Build and run backend
+
 ```bash
-go run main.go 
+cd go-backend
+make build
+./go-backend
 ```
 
-5. Start the Next.js frontend by running:
+4. In another terminal build and run frontend
+
+### *Right now build fails, run in dev*
+
 ```bash
+cd gnoland-visualized
+npm install
+npm run build
+npm run start
+
+// For development
 npm run dev
 ```
