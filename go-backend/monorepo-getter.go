@@ -15,7 +15,7 @@ type ExtendedPkg struct {
 }
 
 func getMonorepoPackages() []ExtendedPkg {
-	path := "../gno/examples/gno.land"
+	path := "gno/examples/gno.land"
 
 	pkgs, err := gnomod.ListPkgs(path)
 	if err != nil {
@@ -25,7 +25,7 @@ func getMonorepoPackages() []ExtendedPkg {
 	extendedPkgs := make([]ExtendedPkg, len(pkgs))
 	for i, pkg := range pkgs {
 
-		pkg.Dir = strings.TrimPrefix(pkg.Dir, "../gno/examples/")
+		pkg.Dir = strings.TrimPrefix(pkg.Dir, "gno/examples/")
 
 		parts := strings.Split(pkg.Name, "/")
 		if len(parts) > 0 {
