@@ -3,14 +3,7 @@
 import type React from "react"
 import { useEffect, useState, useRef } from "react"
 import type { Package } from "@/types/Package"
-
-async function getPackages(): Promise<Package[]> {
-  const res = await fetch("http://localhost:8080/getAllPackages")
-  if (!res.ok) {
-    throw new Error("Failed to fetch packages")
-  }
-  return res.json()
-}
+import { getPackages } from "./api/package-api"
 
 const PackageList: React.FC = () => {
   const [packages, setPackages] = useState<Package[]>([])
