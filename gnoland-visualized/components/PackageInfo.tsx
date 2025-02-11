@@ -1,72 +1,59 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import type { Package } from "@/types/Package"
+import { usePackage } from "@/contexts/PackageContext"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
-interface PackageInfoProps {
-  packages: Package[]
-}
+export function PackageInfo() {
+  const { selectedPackage, setSelectedPackage } = usePackage()
 
-export default function PackageInfo({ packages }: PackageInfoProps) {
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
-  const [packagesImportingThis, setPackagesImportingThis] = useState<Package[]>([])
-
-  useEffect(() => {
-    const handlePackageSelect = (event: CustomEvent) => {
-      const packageDir = event.detail
-      const pkg = packages.find((p) => p.Dir === packageDir)
-      if (pkg) {
-        setSelectedPackage(pkg)
-
-        const importingPackages = packages.filter((p) =>
-          p.Imports.includes(pkg.Dir)
-        )
-        setPackagesImportingThis(importingPackages)
-      } else {
-        setSelectedPackage(null)
-        setPackagesImportingThis([])
-      }
-    }
-
-    window.addEventListener("packageSelect", handlePackageSelect as EventListener)
-
-    return () => {
-      window.removeEventListener("packageSelect", handlePackageSelect as EventListener)
-    }
-  }, [packages])
-
-  if (!selectedPackage) {
-    return <div>Click on a package in the graph to see its details.</div>
-  }
+  const onClose = () => setSelectedPackage(null)
 
   return (
-    <div className="p-4 rounded shadow">
-      <h2 className="text-xl font-bold mb-2">{selectedPackage.Name}</h2>
-      <h2 className="text-lg font-bold mb-2">{selectedPackage.Dir}</h2>
-      <p>
-        <strong>Creator:</strong> {selectedPackage.Creator}
-      </p>
-      <h3 className="font-bold mt-4 mb-2">Imports:</h3>
-      {selectedPackage.Imports.length > 0 ? (
-        <ul className="list-disc list-inside">
-          {selectedPackage.Imports.map((imp, index) => (
-            <li key={index}>{imp}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>No imports</p>
-      )}
-
-      <h3 className="font-bold mt-4 mb-2">Packages that import this package:</h3>
-      {packagesImportingThis.length > 0 ? (
-        <ul className="list-disc list-inside">
-          {packagesImportingThis.map((pkg, index) => (
-            <li key={index}>{pkg.Dir}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>No packages import this package.</p>
+    <div
+      className={`fixed left-0 top-0 h-full w-80 bg-white shadow-lg p-4 transform transition-transform duration-300 ease-in-out z-10 ${
+        selectedPackage ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
+      {selectedPackage && (
+        <>
+          <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+            &times;
+          </button>
+          <h2 className="text-2xl font-bold text-center mb-2">{selectedPackage.Name}</h2>
+          <p className="text-center text-sm text-gray-600 mb-4">
+            Directory: {selectedPackage.Dir}
+            <br />
+            Creator: {selectedPackage.Creator}
+          </p>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Imports</h3>
+              <ScrollArea className="h-40 border rounded">
+                <ul className="p-2">
+                  {selectedPackage.Imports.map((imp, index) => (
+                    <li key={index} className="text-sm">
+                      {imp}
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Imported By</h3>
+              <ScrollArea className="h-40 border rounded">
+                <ul className="p-2">
+                  {selectedPackage.Imported.map((imp, index) => (
+                    <li key={index} className="text-sm">
+                      {imp}
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
 }
+

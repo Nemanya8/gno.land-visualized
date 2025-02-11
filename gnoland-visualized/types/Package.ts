@@ -4,5 +4,6 @@ export interface Package {
   Imports: string[]
   Draft: boolean
   Creator: string
+  Imported: string[]
 }
 

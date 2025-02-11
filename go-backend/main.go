@@ -25,7 +25,8 @@ func main() {
 }
 
 func getAllImported(packages []ExtendedPkg) []ExtendedPkg {
-	for i := 0; i < len(packages)-1; i++ {
+	for i := 0; i < len(packages); i++ {
+		packages[i].Imported = []string{}
 		for j := 0; j < len(packages); j++ {
 			for k := 0; k < len(packages[j].Imports); k++ {
 				if packages[i].Dir == packages[j].Imports[k] {
@@ -33,10 +34,6 @@ func getAllImported(packages []ExtendedPkg) []ExtendedPkg {
 				}
 			}
 		}
-		if packages[i].Imported == nil {
-			packages[i].Imported = []string{}
-		}
-
 	}
 
 	return packages

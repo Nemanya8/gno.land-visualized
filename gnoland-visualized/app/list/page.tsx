@@ -5,7 +5,6 @@ import { useEffect, useState, useRef } from "react"
 import type { Package } from "@/types/Package"
 
 async function getPackages(): Promise<Package[]> {
-  console.log("getPackages called") // Add this line
   const res = await fetch("http://localhost:8080/getAllPackages")
   if (!res.ok) {
     throw new Error("Failed to fetch packages")
@@ -20,7 +19,6 @@ const PackageList: React.FC = () => {
   const fetchedRef = useRef(false)
 
   useEffect(() => {
-    console.log("PackageList useEffect called") // Add this line
 
     if (fetchedRef.current) return
 
@@ -38,8 +36,6 @@ const PackageList: React.FC = () => {
 
     fetchPackages()
   }, [])
-
-  console.log("PackageList rendered") // Add this line
 
   if (loading) {
     return <div>Loading...</div>

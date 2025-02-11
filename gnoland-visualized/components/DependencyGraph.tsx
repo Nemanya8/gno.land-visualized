@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import dynamic from "next/dynamic"
 import type { Package } from "@/types/Package"
+import { usePackage } from "@/contexts/PackageContext"
 
 const ForceGraph3D = dynamic(() => import("react-force-graph").then((mod) => mod.ForceGraph3D), { ssr: false })
 
@@ -11,8 +12,8 @@ interface DependencyGraphProps {
 }
 
 interface GraphData {
-  nodes: { id: string; dir: string; val: number; color?: string }[]
-  links: { source: string; target: string; color?: string }[]
+  nodes: { id: string; dir: string; name: string; val: number; color?: string; draft: boolean; creator: string }[]
+  links: { source: string; target: string; color?: string; type: "import" | "imported" }[]
 }
 
 export default function DependencyGraph({ packages }: DependencyGraphProps) {
@@ -21,6 +22,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [importedNodes, setImportedNodes] = useState(new Set())
   const [importingNodes, setImportingNodes] = useState(new Set())
+  const { setSelectedPackage } = usePackage()
 
   useEffect(() => {
     const importCounts: { [key: string]: number } = {}
@@ -37,15 +39,24 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
     const nodes = packages.map((pkg) => ({
       id: pkg.Dir,
       dir: pkg.Dir,
-      val: importCounts[pkg.Dir] ? importCounts[pkg.Dir] + 1 : 1,
+      name: pkg.Name,
+      val: (importCounts[pkg.Dir] || 0) + (pkg.Imported.length || 0) + 1,
+      draft: pkg.Draft,
+      creator: pkg.Creator,
     }))
 
-    const links = packages.flatMap((pkg) =>
-      pkg.Imports.map((imp) => ({
+    const links = packages.flatMap((pkg) => [
+      ...pkg.Imports.map((imp) => ({
         source: pkg.Dir,
         target: imp,
+        type: "import" as const,
       })),
-    )
+      ...pkg.Imported.map((imp) => ({
+        source: imp,
+        target: pkg.Dir,
+        type: "imported" as const,
+      })),
+    ])
 
     setGraphData({ nodes, links })
   }, [packages])
@@ -58,6 +69,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
         setImportedNodes(new Set())
         setImportingNodes(new Set())
         setSelectedNode(null)
+        setSelectedPackage(null)
       } else {
         // Highlight the clicked node and its direct connections
         const connectedNodes = new Set([node.id])
@@ -65,25 +77,28 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
         const importedNodes = new Set()
         const importingNodes = new Set()
         graphData.links.forEach((link: any) => {
-          if ((link.source as any).id === node.id) {
-            connectedNodes.add((link.target as any).id)
+          if (link.source.id === node.id) {
+            connectedNodes.add(link.target.id)
             connectedLinks.add(link)
-            importedNodes.add((link.target as any).id)
+            if (link.type === "import") importedNodes.add(link.target.id)
+            else importingNodes.add(link.target.id)
           }
-          if ((link.target as any).id === node.id) {
-            connectedNodes.add((link.source as any).id)
+          if (link.target.id === node.id) {
+            connectedNodes.add(link.source.id)
             connectedLinks.add(link)
-            importingNodes.add((link.source as any).id)
+            if (link.type === "import") importingNodes.add(link.source.id)
+            else importedNodes.add(link.source.id)
           }
         })
         setHighlightLinks(connectedLinks)
         setImportedNodes(importedNodes)
         setImportingNodes(importingNodes)
         setSelectedNode(node.id)
+        setSelectedPackage(packages.find((pkg) => pkg.Dir === node.id) || null)
       }
       window.dispatchEvent(new CustomEvent("packageSelect", { detail: node.id }))
     },
-    [graphData.links, selectedNode],
+    [graphData.links, selectedNode, packages, setSelectedPackage],
   )
 
   const updateNodeColor = useCallback(
@@ -91,34 +106,34 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
       if (node.id === selectedNode) return "#ff0000"
       if (importedNodes.has(node.id)) return "#00ff00"
       if (importingNodes.has(node.id)) return "#ffff00"
-      return "#2B65EC"
+      return node.draft ? "#999999" : "#2B65EC"
     },
-    [ selectedNode, importedNodes, importingNodes],
+    [selectedNode, importedNodes, importingNodes],
   )
 
   const updateLinkColor = useCallback(
     (link: any) => {
-      return highlightLinks.has(link) ? "#ff0000" : "#999999"
+      if (highlightLinks.has(link)) return link.type === "import" ? "#ff0000" : "#00ff00"
+      return "#999999"
     },
     [highlightLinks],
   )
 
   return (
-    <div>
+    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
       {graphData.nodes.length > 0 && (
-      <ForceGraph3D
-        graphData={graphData}
-        nodeLabel="name"
-        nodeColor={updateNodeColor}
-        linkColor={updateLinkColor}
-        linkWidth={(link) => (highlightLinks.has(link) ? 2 : 1)}
-        linkDirectionalParticles={2}
-        linkDirectionalParticleWidth={(link) => (highlightLinks.has(link) ? 2 : 0)}
-        onNodeClick={handleNodeClick}
-        width={1350}
-        height={800}
-      />
+        <ForceGraph3D
+          graphData={graphData}
+          nodeLabel={(node: any) => `${node.name} - ${node.creator}`}
+          nodeColor={updateNodeColor}
+          linkColor={updateLinkColor}
+          linkWidth={(link) => (highlightLinks.has(link) ? 2 : 1)}
+          linkDirectionalParticles={2}
+          linkDirectionalParticleWidth={(link) => (highlightLinks.has(link) ? 2 : 0)}
+          onNodeClick={handleNodeClick}
+        />
       )}
     </div>
   )
 }
+
