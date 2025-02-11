@@ -6,7 +6,7 @@ import { PackageButton } from "./PackageButton"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatAddress } from "@/utils/utils"
-import { Card, CardHeader, CardContent, CardFooter } from "./ui/card"
+import { Card, CardHeader, CardContent, CardFooter } from "../../../components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function PackageInfo() {
