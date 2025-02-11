@@ -72,6 +72,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
         const connectedLinks = new Set()
         const importedNodes = new Set()
         const importingNodes = new Set()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         graphData.links.forEach((link: any) => {
           if (link.source.id === nodeId) {
             connectedNodes.add(link.target.id)
@@ -95,6 +96,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   )
 
   const handleNodeClick = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any) => {
       updateSelectedNode(node.id)
     },
@@ -114,6 +116,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   }, [updateSelectedNode])
 
   const updateNodeColor = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any) => {
       if (node.id === selectedNode) return "#ff6b6b"
       if (importedNodes.has(node.id)) return "#c96934"
@@ -124,6 +127,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   )
 
   const updateLinkColor = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (link: any) => {
       if (highlightLinks.has(link)) {
         if (link.source.id === selectedNode) {
@@ -142,6 +146,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
       {graphData.nodes.length > 0 && (
         <ForceGraph3D
           graphData={graphData}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           nodeLabel={(node: any) => `${node.name} - ${node.creator}`}
           nodeColor={updateNodeColor}
           linkColor={updateLinkColor}

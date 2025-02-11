@@ -43,8 +43,6 @@ make build
 
 4. In another terminal build and run frontend
 
-### *Right now build fails, run in dev*
-
 ```bash
 cd gnoland-visualized
 npm install
