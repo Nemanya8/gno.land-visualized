@@ -2,18 +2,9 @@
 name = "go-backend"
 env = "production"
 
-[build]
-builder = "heroku/buildpacks:20"
-
-# Set the build command
-buildCommand = """
-  cd go-backend && make build && \
-  git clone https://github.com/gnolang/gno.git ../gno
-"""
-
-[start]
-# Set the run command
-startCommand = "cd go-backend && ./go-backend"
+# Use Docker to build and run the service
+buildCommand = "docker build -t go-backend ."
+startCommand = "docker run -p 8080:8080 go-backend"
 
 [deploy]
 restartPolicyType = "ALWAYS"
