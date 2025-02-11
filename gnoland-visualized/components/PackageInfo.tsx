@@ -56,7 +56,8 @@ export function PackageInfo() {
             <CardContent className="flex-grow overflow-hidden flex flex-col p-6">
               <div className="space-y-4 flex-grow overflow-hidden flex flex-col">
                 <div className="flex-1 min-h-0">
-                  <h3 className="text-md font-semibold mb-2 text-gray-200">Imports</h3>
+                    <h3 className="text-md font-semibold mb-2 text-gray-200">Imports</h3>
+                    <div className="w-full h-0.5 bg-[#c96934] mb-4"></div>
                   <ScrollArea className="h-[calc(100%-2rem)]">
                     <div className="pr-4 space-y-2">
                       {selectedPackage.Imports.map((imp, index) => (
@@ -72,6 +73,7 @@ export function PackageInfo() {
                 </div>
                 <div className="flex-1 min-h-0">
                   <h3 className="text-md font-semibold mb-2 text-gray-200">Imported By</h3>
+                  <div className="w-full h-0.5 bg-[#4ecdc4] mb-4"></div>
                   <ScrollArea className="h-[calc(100%-2rem)]">
                     <div className="pr-4 space-y-2">
                       {selectedPackage.Imported.map((imp, index) => (
