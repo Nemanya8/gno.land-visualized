@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -9,7 +10,8 @@ import (
 
 type ExtendedPkg struct {
 	gnomod.Pkg
-	Creator string
+	Creator  string
+	Imported []string
 }
 
 func getMonorepoPackages() []ExtendedPkg {
@@ -35,6 +37,8 @@ func getMonorepoPackages() []ExtendedPkg {
 			Creator: "monorepo",
 		}
 	}
+
+	fmt.Printf("Monorepo packages retrieved\n")
 
 	return extendedPkgs
 }

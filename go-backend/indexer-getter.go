@@ -119,7 +119,7 @@ func getIndexerPackages() ([]ExtendedPkg, error) {
 					Name:    message.Value.Package.Name,
 					Draft:   false,
 					Creator: message.Value.Creator,
-					Imports: []string{}, // Initialize Imports as an empty slice
+					Imports: []string{},
 				}
 
 				uniqueImports := make(map[string]bool)
@@ -151,6 +151,8 @@ func getIndexerPackages() ([]ExtendedPkg, error) {
 			}
 		}
 	}
+
+	fmt.Printf("Indexer packages retrieved\n")
 
 	return output, nil
 }
