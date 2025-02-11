@@ -15,10 +15,10 @@ export default async function Home() {
   const packages = await getPackages()
 
   return (
-    <PackageProvider>
+    <PackageProvider initialPackages={packages}>
       <main className="flex h-screen w-screen overflow-hidden">
         <PackageInfo />
-        <div className="h-full w-full relative">
+        <div className="h-full w-full">
           <DependencyGraph packages={packages} />
         </div>
       </main>

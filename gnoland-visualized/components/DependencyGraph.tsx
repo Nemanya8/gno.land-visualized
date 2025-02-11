@@ -61,9 +61,9 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
     setGraphData({ nodes, links })
   }, [packages])
 
-  const handleNodeClick = useCallback(
-    (node: any) => {
-      if (selectedNode === node.id) {
+  const updateSelectedNode = useCallback(
+    (nodeId: string) => {
+      if (selectedNode === nodeId) {
         // If clicking the same node, reset highlights
         setHighlightLinks(new Set())
         setImportedNodes(new Set())
@@ -72,18 +72,18 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
         setSelectedPackage(null)
       } else {
         // Highlight the clicked node and its direct connections
-        const connectedNodes = new Set([node.id])
+        const connectedNodes = new Set([nodeId])
         const connectedLinks = new Set()
         const importedNodes = new Set()
         const importingNodes = new Set()
         graphData.links.forEach((link: any) => {
-          if (link.source.id === node.id) {
+          if (link.source.id === nodeId) {
             connectedNodes.add(link.target.id)
             connectedLinks.add(link)
             if (link.type === "import") importedNodes.add(link.target.id)
             else importingNodes.add(link.target.id)
           }
-          if (link.target.id === node.id) {
+          if (link.target.id === nodeId) {
             connectedNodes.add(link.source.id)
             connectedLinks.add(link)
             if (link.type === "import") importingNodes.add(link.source.id)
@@ -93,13 +93,31 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
         setHighlightLinks(connectedLinks)
         setImportedNodes(importedNodes)
         setImportingNodes(importingNodes)
-        setSelectedNode(node.id)
-        setSelectedPackage(packages.find((pkg) => pkg.Dir === node.id) || null)
+        setSelectedNode(nodeId)
+        setSelectedPackage(packages.find((pkg) => pkg.Dir === nodeId) || null)
       }
-      window.dispatchEvent(new CustomEvent("packageSelect", { detail: node.id }))
     },
     [graphData.links, selectedNode, packages, setSelectedPackage],
   )
+
+  const handleNodeClick = useCallback(
+    (node: any) => {
+      updateSelectedNode(node.id)
+    },
+    [updateSelectedNode],
+  )
+
+  useEffect(() => {
+    const handlePackageSelect = (event: CustomEvent) => {
+      updateSelectedNode(event.detail)
+    }
+
+    window.addEventListener("packageSelect", handlePackageSelect as EventListener)
+
+    return () => {
+      window.removeEventListener("packageSelect", handlePackageSelect as EventListener)
+    }
+  }, [updateSelectedNode])
 
   const updateNodeColor = useCallback(
     (node: any) => {
@@ -131,6 +149,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
           linkDirectionalParticles={2}
           linkDirectionalParticleWidth={(link) => (highlightLinks.has(link) ? 2 : 0)}
           onNodeClick={handleNodeClick}
+          backgroundColor="#28282B"
         />
       )}
     </div>

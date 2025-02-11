@@ -1,59 +1,112 @@
 "use client"
 
-import { usePackage } from "@/contexts/PackageContext"
+import { usePackage, usePackages } from "@/contexts/PackageContext"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { PackageButton } from "./PackageButton"
+import { X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { formatAddress } from "@/utils/utils"
+import { Card, CardHeader, CardContent, CardFooter } from "./ui/card"
+import { motion, AnimatePresence } from "framer-motion"
 
 export function PackageInfo() {
   const { selectedPackage, setSelectedPackage } = usePackage()
+  const packages = usePackages()
 
   const onClose = () => setSelectedPackage(null)
 
+  const handlePackageClick = (packageDir: string) => {
+    const newPackage = packages.find((pkg) => pkg.Dir === packageDir)
+    if (newPackage) {
+      setSelectedPackage(newPackage)
+      window.dispatchEvent(new CustomEvent("packageSelect", { detail: packageDir }))
+    }
+  }
+
   return (
-    <div
-      className={`fixed left-0 top-0 h-full w-80 bg-white shadow-lg p-4 transform transition-transform duration-300 ease-in-out z-10 ${
-        selectedPackage ? "translate-x-0" : "-translate-x-full"
-      }`}
-    >
+    <AnimatePresence>
       {selectedPackage && (
-        <>
-          <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
-            &times;
-          </button>
-          <h2 className="text-2xl font-bold text-center mb-2">{selectedPackage.Name}</h2>
-          <p className="text-center text-sm text-gray-600 mb-4">
-            Directory: {selectedPackage.Dir}
-            <br />
-            Creator: {selectedPackage.Creator}
-          </p>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Imports</h3>
-              <ScrollArea className="h-40 border rounded">
-                <ul className="p-2">
-                  {selectedPackage.Imports.map((imp, index) => (
-                    <li key={index} className="text-sm">
-                      {imp}
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
+        <motion.div
+          initial={{ x: "-100%", opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: "-100%", opacity: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed left-4 top-4 bottom-4 w-96 z-50 drop-shadow-2xl"
+        >
+          <Card className="h-full overflow-hidden flex flex-col bg-[#18181a] text-gray-300 border-[#18181a] shadow-lg">
+            <CardHeader className="flex-shrink-0 py-3">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-100">{selectedPackage.Name}</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-100 hover:bg-[#28282B]"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </CardHeader>
+            <div className="flex-shrink-0 p-6">
+              <p className="text-base text-gray-300 overflow-hidden text-ellipsis">
+                <span className="block mb-2">Directory: {formatAddress(selectedPackage.Dir)}</span>
+                <span className="block">Creator: {formatAddress(selectedPackage.Creator)}</span>
+              </p>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Imported By</h3>
-              <ScrollArea className="h-40 border rounded">
-                <ul className="p-2">
-                  {selectedPackage.Imported.map((imp, index) => (
-                    <li key={index} className="text-sm">
-                      {imp}
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
-            </div>
-          </div>
-        </>
+            <CardContent className="flex-grow overflow-hidden flex flex-col p-6">
+              <div className="space-y-4 flex-grow overflow-hidden flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <h3 className="text-md font-semibold mb-2 text-gray-200">Imports</h3>
+                  <ScrollArea className="h-[calc(100%-2rem)]">
+                    <div className="pr-4 space-y-2">
+                      {selectedPackage.Imports.map((imp, index) => (
+                        <PackageButton
+                          key={index}
+                          name={imp.split("/").pop() || ""}
+                          dir={imp}
+                          onClick={() => handlePackageClick(imp)}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <h3 className="text-md font-semibold mb-2 text-gray-200">Imported By</h3>
+                  <ScrollArea className="h-[calc(100%-2rem)]">
+                    <div className="pr-4 space-y-2">
+                      {selectedPackage.Imported.map((imp, index) => (
+                        <PackageButton
+                          key={index}
+                          name={imp.split("/").pop() || ""}
+                          dir={imp}
+                          onClick={() => handlePackageClick(imp)}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex-shrink-0 space-x-2 py-3">
+              <Button
+                className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100"
+                onClick={() => window.open(`https://test5.${selectedPackage.Dir}`, "_blank")}
+              >
+                See on Gnoweb
+              </Button>
+              <Button
+                className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100"
+                onClick={() =>
+                  window.open(`https://gno.studio/connect/view/${selectedPackage.Dir}?network=test5`, "_blank")
+                }
+              >
+                See in Studio
+              </Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
       )}
-    </div>
+    </AnimatePresence>
   )
 }
 
