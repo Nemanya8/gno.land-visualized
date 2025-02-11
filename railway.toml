@@ -1,0 +1,14 @@
+[service]
+name = "go-backend"
+env = "production"
+
+[build]
+builder = "heroku/buildpacks:20"
+
+buildCommand = "cd go-backend && make build"
+
+[start]
+startCommand = "cd go-backend && ./go-backend"
+
+[deploy]
+restartPolicyType = "ALWAYS"
