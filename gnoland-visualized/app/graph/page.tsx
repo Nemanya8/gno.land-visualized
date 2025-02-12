@@ -8,7 +8,7 @@ export default async function GraphPage() {
 
   return (
     <PackageProvider initialPackages={packages}>
-      <main className="flex h-screen w-screen overflow-hidden">
+      <main className="flex h-screen w-screen overflow-hidden bg-[#1a1a1a]">
         <PackageInfo />
         <div className="h-full w-full">
           <DependencyGraph packages={packages} />
