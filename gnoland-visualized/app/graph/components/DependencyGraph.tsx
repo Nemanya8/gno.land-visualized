@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import dynamic from "next/dynamic"
 import type { Package } from "@/types/Package"
 import { usePackage } from "@/contexts/PackageContext"
@@ -13,7 +13,7 @@ interface DependencyGraphProps {
 
 interface GraphData {
   nodes: { id: string; dir: string; name: string; val: number; color?: string; draft: boolean; creator: string }[]
-  links: { source: string; target: string; color?: string; }[]
+  links: { source: string; target: string; color?: string }[]
 }
 
 export default function DependencyGraph({ packages }: DependencyGraphProps) {
@@ -23,6 +23,8 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   const [importedNodes, setImportedNodes] = useState(new Set())
   const [importingNodes, setImportingNodes] = useState(new Set())
   const { setSelectedPackage } = usePackage()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
     const importCounts: { [key: string]: number } = {}
@@ -49,9 +51,9 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
       pkg.Imports.map((imp: string) => ({
         source: pkg.Dir,
         target: imp,
-      }))
+      })),
     )
-    
+
     const uniqueNodes = Array.from(new Map(nodes.map((node) => [node.id, node])).values())
 
     setGraphData({ nodes: uniqueNodes, links })
@@ -77,14 +79,14 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
           if (link.source.id === nodeId) {
             connectedNodes.add(link.target.id)
             connectedLinks.add(link)
-        
+
             importedNodes.add(link.target.id)
           } else if (link.target.id === nodeId) {
             connectedNodes.add(link.source.id)
             connectedLinks.add(link)
             importingNodes.add(link.source.id)
           }
-        })        
+        })
         setHighlightLinks(connectedLinks)
         setImportedNodes(importedNodes)
         setImportingNodes(importingNodes)
@@ -141,10 +143,30 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
     [highlightLinks, selectedNode],
   )
 
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight,
+        })
+      }
+    }
+
+    updateDimensions()
+    window.addEventListener("resize", updateDimensions)
+
+    return () => {
+      window.removeEventListener("resize", updateDimensions)
+    }
+  }, [])
+
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+    <div ref={containerRef} className="w-full h-screen">
       {graphData.nodes.length > 0 && (
         <ForceGraph3D
+          width={dimensions.width}
+          height={dimensions.height}
           graphData={graphData}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           nodeLabel={(node: any) => `${node.name} - ${node.creator}`}
