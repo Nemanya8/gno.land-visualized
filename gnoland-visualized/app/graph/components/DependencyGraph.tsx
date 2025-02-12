@@ -168,6 +168,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
           width={dimensions.width}
           height={dimensions.height}
           graphData={graphData}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           nodeLabel={(node: any) => `${node.name} - ${node.creator}`}
           nodeColor={updateNodeColor}
           linkColor={updateLinkColor}
