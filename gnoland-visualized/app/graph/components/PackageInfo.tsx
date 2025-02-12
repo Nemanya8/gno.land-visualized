@@ -13,7 +13,10 @@ export function PackageInfo() {
   const { selectedPackage, setSelectedPackage } = usePackage()
   const packages = usePackages()
 
-  const onClose = () => setSelectedPackage(null)
+  const onClose = () => {
+    setSelectedPackage(null)
+    window.dispatchEvent(new CustomEvent("packageSelect", {}))
+  }
 
   const handlePackageClick = (packageDir: string) => {
     const newPackage = packages.find((pkg) => pkg.Dir === packageDir)
