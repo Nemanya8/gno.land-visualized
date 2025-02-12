@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { usePackage, usePackages } from "@/contexts/PackageContext"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { PackageButton } from "./PackageButton"
@@ -97,15 +98,15 @@ export function PackageInfo() {
                 className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
                 onClick={() => window.open(`https://test5.${selectedPackage.Dir}`, "_blank")}
               >
-                See on Gnoweb
+                <Image src="/gnoland.svg" alt="Gnoland" width={25} height={25} className="mr-2" />
+                <span className="font-bold">See on Gnoweb</span>
               </Button>
               <Button
                 className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
-                onClick={() =>
-                  window.open(`https://gno.studio/connect/view/${selectedPackage.Dir}?network=test5`, "_blank")
-                }
+                onClick={() => window.open(`https://gno.studio/connect/view/${selectedPackage.Dir}?network=test5`, "_blank")}
               >
-                See in Studio
+                <Image src="/gnostudio.svg" alt="Gno Studio" width={25} height={25} className="mr-2" />
+                <span className="font-bold">See in Studio</span>
               </Button>
             </CardFooter>
           </Card>
