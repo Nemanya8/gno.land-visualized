@@ -31,12 +31,12 @@ export function PackageInfo() {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: "-100%", opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed left-4 top-4 bottom-4 w-96 z-50 drop-shadow-2xl"
+          className="fixed left-0 top-0 bottom-0 w-full sm:w-96 z-50"
         >
           <Card className="h-full overflow-hidden flex flex-col bg-[#18181a] text-gray-300 border-[#18181a] shadow-lg">
-            <CardHeader className="flex-shrink-0 py-3">
+            <CardHeader className="flex-shrink-0 py-3 px-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-100">{selectedPackage.Name}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-100 truncate">{selectedPackage.Name}</h2>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -47,17 +47,17 @@ export function PackageInfo() {
                 </Button>
               </div>
             </CardHeader>
-            <div className="flex-shrink-0 p-6">
-              <p className="text-base text-gray-300 overflow-hidden text-ellipsis">
-                <span className="block mb-2">Directory: {formatAddress(selectedPackage.Dir)}</span>
+            <div className="flex-shrink-0 px-4 pb-2">
+              <p className="text-sm sm:text-base text-gray-300 overflow-hidden text-ellipsis">
+                <span className="block">Directory: {formatAddress(selectedPackage.Dir)}</span>
                 <span className="block">Creator: {formatAddress(selectedPackage.Creator)}</span>
               </p>
             </div>
-            <CardContent className="flex-grow overflow-hidden flex flex-col p-6">
+            <CardContent className="flex-grow overflow-hidden flex flex-col px-4 py-2">
               <div className="space-y-4 flex-grow overflow-hidden flex flex-col">
                 <div className="flex-1 min-h-0">
-                    <h3 className="text-md font-semibold mb-2 text-gray-200">Imports</h3>
-                    <div className="w-full h-0.5 bg-[#c96934] mb-4"></div>
+                  <h3 className="text-sm sm:text-md font-semibold mb-2 text-gray-200">Imports</h3>
+                  <div className="w-full h-0.5 bg-[#c96934] mb-2"></div>
                   <ScrollArea className="h-[calc(100%-2rem)]">
                     <div className="pr-4 space-y-2">
                       {selectedPackage.Imports.map((imp, index) => (
@@ -72,8 +72,8 @@ export function PackageInfo() {
                   </ScrollArea>
                 </div>
                 <div className="flex-1 min-h-0">
-                  <h3 className="text-md font-semibold mb-2 text-gray-200">Imported By</h3>
-                  <div className="w-full h-0.5 bg-[#4ecdc4] mb-4"></div>
+                  <h3 className="text-sm sm:text-md font-semibold mb-2 text-gray-200">Imported By</h3>
+                  <div className="w-full h-0.5 bg-[#4ecdc4] mb-2"></div>
                   <ScrollArea className="h-[calc(100%-2rem)]">
                     <div className="pr-4 space-y-2">
                       {selectedPackage.Imported.map((imp, index) => (
@@ -89,15 +89,15 @@ export function PackageInfo() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex-shrink-0 space-x-2 py-3">
+            <CardFooter className="flex-shrink-0 space-x-2 p-4">
               <Button
-                className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100"
+                className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
                 onClick={() => window.open(`https://test5.${selectedPackage.Dir}`, "_blank")}
               >
                 See on Gnoweb
               </Button>
               <Button
-                className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100"
+                className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
                 onClick={() =>
                   window.open(`https://gno.studio/connect/view/${selectedPackage.Dir}?network=test5`, "_blank")
                 }
