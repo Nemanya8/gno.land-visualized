@@ -2,6 +2,7 @@ import DependencyGraph from "./components/DependencyGraph"
 import { PackageProvider } from "@/contexts/PackageContext"
 import { PackageInfo } from "./components/PackageInfo"
 import { getPackages } from "./api/package-api"
+import { PackageFilters } from "./components/PackageFilters"
 
 export default async function GraphPage() {
   const packages = await getPackages()
@@ -10,6 +11,7 @@ export default async function GraphPage() {
     <PackageProvider initialPackages={packages}>
       <main className="flex h-screen w-screen overflow-hidden bg-[#1a1a1a]">
         <PackageInfo />
+        <PackageFilters />
         <div className="h-full w-full">
           <DependencyGraph packages={packages} />
         </div>
