@@ -1,14 +1,15 @@
-package main
+package service
 
 import (
 	"encoding/json"
+	"go-backend/domain"
 	"net/http"
 	"strings"
 )
 
-var output []ExtendedPkg
+var output []domain.ExtendedPkg
 
-func SetPackagesData(data []ExtendedPkg) {
+func SetPackagesData(data []domain.ExtendedPkg) {
 	output = data
 }
 
@@ -28,7 +29,7 @@ func SearchPackages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var results []ExtendedPkg
+	var results []domain.ExtendedPkg
 	for _, pkg := range output {
 		if strings.Contains(pkg.Dir, searchTerm) || strings.Contains(pkg.Creator, searchTerm) {
 			results = append(results, pkg)
@@ -57,7 +58,7 @@ func FilterPackages(w http.ResponseWriter, r *http.Request) {
 		prefix = "gno.land/r/"
 	}
 
-	var results []ExtendedPkg
+	var results []domain.ExtendedPkg
 	for _, pkg := range output {
 		if strings.HasPrefix(pkg.Dir, prefix) {
 			results = append(results, pkg)
@@ -69,20 +70,5 @@ func FilterPackages(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(results)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func enableCORS(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next(w, r)
 	}
 }

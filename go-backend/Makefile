@@ -1,12 +1,12 @@
 BINARY_NAME = go-backend
 
-GO_FILES = main.go monorepo-getter.go api.go indexer-getter.go
+GO_FILES = main/main.go monorepo/monorepo.go indexer/indexer.go service/service.go utils/utils.go domain/domain.go
 
 all: build
 
 build:
 	@echo "Building $(BINARY_NAME)..."
-	go build -o $(BINARY_NAME) $(GO_FILES)
+	go build -o $(BINARY_NAME) ./main
 	@echo "Build complete. Binary: ./$(BINARY_NAME)"
 
 run:

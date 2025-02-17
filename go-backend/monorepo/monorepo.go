@@ -1,20 +1,15 @@
-package main
+package monorepo
 
 import (
 	"fmt"
+	"go-backend/domain"
 	"log"
 	"strings"
 
 	"github.com/gnolang/gno/gnovm/pkg/gnomod"
 )
 
-type ExtendedPkg struct {
-	gnomod.Pkg
-	Creator  string
-	Imported []string
-}
-
-func getMonorepoPackages() []ExtendedPkg {
+func GetMonorepoPackages() []domain.ExtendedPkg {
 	path := "gno/examples/gno.land"
 
 	pkgs, err := gnomod.ListPkgs(path)
@@ -22,9 +17,8 @@ func getMonorepoPackages() []ExtendedPkg {
 		log.Fatalf("Error listing packages: %v", err)
 	}
 
-	extendedPkgs := make([]ExtendedPkg, len(pkgs))
+	extendedPkgs := make([]domain.ExtendedPkg, len(pkgs))
 	for i, pkg := range pkgs {
-
 		pkg.Dir = strings.TrimPrefix(pkg.Dir, "gno/examples/")
 
 		parts := strings.Split(pkg.Name, "/")
@@ -32,7 +26,7 @@ func getMonorepoPackages() []ExtendedPkg {
 			pkg.Name = parts[len(parts)-1]
 		}
 
-		extendedPkgs[i] = ExtendedPkg{
+		extendedPkgs[i] = domain.ExtendedPkg{
 			Pkg:     pkg,
 			Creator: "monorepo",
 		}

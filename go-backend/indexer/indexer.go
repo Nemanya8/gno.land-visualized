@@ -1,15 +1,14 @@
-package main
+package indexer
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go-backend/domain"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
-
-	"github.com/gnolang/gno/gnovm/pkg/gnomod"
 )
 
 type GraphQLQuery struct {
@@ -37,27 +36,7 @@ type GraphQLResponse struct {
 	} `json:"data"`
 }
 
-type PackageData struct {
-	Dir     string   `json:"Dir"`
-	Name    string   `json:"Name"`
-	Imports []string `json:"Imports"`
-	Draft   bool     `json:"Draft"`
-	Creator string   `json:"Creator"`
-}
-
-func convertToExtendedPackage(pkg PackageData) ExtendedPkg {
-	return ExtendedPkg{
-		Pkg: gnomod.Pkg{
-			Dir:     pkg.Dir,
-			Name:    pkg.Name,
-			Imports: pkg.Imports,
-			Draft:   pkg.Draft,
-		},
-		Creator: pkg.Creator,
-	}
-}
-
-func getIndexerPackages() ([]ExtendedPkg, error) {
+func GetIndexerPackages() ([]domain.ExtendedPkg, error) {
 	query := `
 	{
 	transactions(filter: {success: true, message: {vm_param: {add_package: {}}}}) {
@@ -108,13 +87,13 @@ func getIndexerPackages() ([]ExtendedPkg, error) {
 		return nil, err
 	}
 
-	var output []ExtendedPkg
+	var output []domain.ExtendedPkg
 	importRegex := regexp.MustCompile(`import\s*\(([\s\S]*?)\)`)
 
 	for _, transaction := range graphQLResponse.Data.Transactions {
 		for _, message := range transaction.Messages {
 			if message.Value.TypeName == "MsgAddPackage" {
-				packageData := PackageData{
+				packageData := domain.PackageData{
 					Dir:     message.Value.Package.Path,
 					Name:    message.Value.Package.Name,
 					Draft:   false,
@@ -146,7 +125,7 @@ func getIndexerPackages() ([]ExtendedPkg, error) {
 					}
 				}
 
-				extendedPackage := convertToExtendedPackage(packageData)
+				extendedPackage := domain.ConvertToExtendedPackage(packageData)
 				output = append(output, extendedPackage)
 			}
 		}
