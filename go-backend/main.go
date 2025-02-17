@@ -20,6 +20,8 @@ func main() {
 	SetPackagesData(packages)
 
 	http.HandleFunc("/getAllPackages", enableCORS(GetAllPackages))
+	http.HandleFunc("/searchPackages", enableCORS(SearchPackages))
+	http.HandleFunc("/filterPackages", enableCORS(FilterPackages))
 	fmt.Println("Starting server on :8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
