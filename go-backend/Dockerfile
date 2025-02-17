@@ -7,7 +7,7 @@ COPY . .
 RUN git clone https://github.com/gnolang/gno.git
 
 RUN echo "Building the project..." && \
-    go build -o go-backend main.go monorepo-getter.go api.go indexer-getter.go && \
+    make build && \
     echo "Build complete."
 
 FROM debian:bookworm-slim
