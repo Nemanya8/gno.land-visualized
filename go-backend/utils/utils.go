@@ -3,6 +3,8 @@ package utils
 import (
 	"go-backend/domain"
 	"net/http"
+
+	"github.com/gnolang/gno/gnovm/pkg/gnomod"
 )
 
 func EnableCORS(next http.HandlerFunc) http.HandlerFunc {
@@ -33,4 +35,16 @@ func GetAllImported(packages []domain.ExtendedPkg) []domain.ExtendedPkg {
 	}
 
 	return packages
+}
+
+func ConvertToExtendedPackage(pkg domain.PackageData) domain.ExtendedPkg {
+	return domain.ExtendedPkg{
+		Pkg: gnomod.Pkg{
+			Dir:     pkg.Dir,
+			Name:    pkg.Name,
+			Imports: pkg.Imports,
+			Draft:   pkg.Draft,
+		},
+		Creator: pkg.Creator,
+	}
 }

@@ -1,10 +1,10 @@
-FROM golang:1.23 AS builder
+FROM golang:1.24 AS builder
 
 WORKDIR /app
 
 COPY . .
 
-RUN git clone https://github.com/gnolang/gno.git
+RUN if [ ! -d "gno" ]; then git clone https://github.com/gnolang/gno.git; fi
 
 RUN echo "Building the project..." && \
     make build && \

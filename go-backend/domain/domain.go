@@ -15,15 +15,3 @@ type PackageData struct {
 	Draft   bool     `json:"Draft"`
 	Creator string   `json:"Creator"`
 }
-
-func ConvertToExtendedPackage(pkg PackageData) ExtendedPkg {
-	return ExtendedPkg{
-		Pkg: gnomod.Pkg{
-			Dir:     pkg.Dir,
-			Name:    pkg.Name,
-			Imports: pkg.Imports,
-			Draft:   pkg.Draft,
-		},
-		Creator: pkg.Creator,
-	}
-}

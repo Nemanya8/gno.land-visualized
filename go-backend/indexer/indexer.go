@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-backend/domain"
+	"go-backend/utils"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -125,7 +126,7 @@ func GetIndexerPackages() ([]domain.ExtendedPkg, error) {
 					}
 				}
 
-				extendedPackage := domain.ConvertToExtendedPackage(packageData)
+				extendedPackage := utils.ConvertToExtendedPackage(packageData)
 				output = append(output, extendedPackage)
 			}
 		}
