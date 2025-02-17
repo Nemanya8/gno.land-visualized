@@ -3,6 +3,7 @@ package utils
 import (
 	"go-backend/domain"
 	"net/http"
+	"sort"
 
 	"github.com/gnolang/gno/gnovm/pkg/gnomod"
 )
@@ -47,4 +48,11 @@ func ConvertToExtendedPackage(pkg domain.PackageData) domain.ExtendedPkg {
 		},
 		Creator: pkg.Creator,
 	}
+}
+
+func SortByName(pkgs []domain.ExtendedPkg) []domain.ExtendedPkg {
+	sort.Slice(pkgs, func(i, j int) bool {
+		return pkgs[i].Name < pkgs[j].Name
+	})
+	return pkgs
 }

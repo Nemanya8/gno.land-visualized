@@ -21,6 +21,7 @@ func main() {
 	packages = append(packages, indexerPckgs...)
 
 	packages = utils.GetAllImported(packages)
+	packages = utils.SortByName(packages)
 
 	service.SetPackagesData(packages)
 
