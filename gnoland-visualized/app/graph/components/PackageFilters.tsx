@@ -38,9 +38,16 @@ export function PackageFilters() {
   const fetchFilteredPackages = useCallback(async () => {
     setIsLoading(true)
     try {
-      const rPackages = typeFilters.r ? await getFilteredPackages("r") : []
-      const pPackages = typeFilters.p ? await getFilteredPackages("p") : []
-      setFilteredPackages([...rPackages, ...pPackages])
+      let rPackages: Package[] = []
+      let pPackages: Package[] = []
+      
+      if (typeFilters.r && typeFilters.p) {
+        setFilteredPackages(packages)
+      } else {
+        if (typeFilters.r) rPackages = await getFilteredPackages("r")
+        if (typeFilters.p) pPackages = await getFilteredPackages("p")
+        setFilteredPackages([...rPackages, ...pPackages])
+      }
     } catch (error) {
       console.error("Error fetching packages:", error)
     } finally {
