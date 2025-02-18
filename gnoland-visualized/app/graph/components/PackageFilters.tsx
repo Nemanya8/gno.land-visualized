@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { usePackage, usePackages } from "@/contexts/PackageContext"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { PackageButton } from "./PackageButton"
-import { X, ChevronLeft, Loader2 } from "lucide-react"
+import { PackageButtonSkeleton } from "./PackageButtonSkeleton"
+import { X, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,8 +24,10 @@ export function PackageFilters() {
   const [typeFilters, setTypeFilters] = useState({ r: true, p: true })
   const [isLoading, setIsLoading] = useState(true)
 
-  const onClose = () => {
-    setIsOpen(false)
+  const onClose = () => { setIsOpen(false) }
+
+  const handleTypeFilterChange = (type: "r" | "p") => {
+    setTypeFilters((prev) => ({ ...prev, [type]: !prev[type] }))
   }
 
   const handlePackageClick = (packageDir: string) => {
@@ -40,7 +43,7 @@ export function PackageFilters() {
     try {
       let rPackages: Package[] = []
       let pPackages: Package[] = []
-      
+
       if (typeFilters.r && typeFilters.p) {
         setFilteredPackages(packages)
       } else {
@@ -53,27 +56,16 @@ export function PackageFilters() {
     } finally {
       setIsLoading(false)
     }
-  }, [typeFilters])
+  }, [typeFilters, packages])
 
   useEffect(() => {
     fetchFilteredPackages()
   }, [fetchFilteredPackages])
 
-  const handleSearch = useCallback(() => {
-    const lowercasedTerm = searchTerm.toLowerCase()
-    const filtered = filteredPackages.filter(
-      (pkg) => pkg.Name.toLowerCase().includes(lowercasedTerm) || pkg.Dir.toLowerCase().includes(lowercasedTerm),
-    )
+  useEffect(() => {
+    const filtered = filteredPackages.filter((pkg) => pkg.Name.toLowerCase().includes(searchTerm.toLowerCase()))
     setDisplayedPackages(filtered)
   }, [searchTerm, filteredPackages])
-
-  useEffect(() => {
-    handleSearch()
-  }, [handleSearch, searchTerm])
-
-  const handleTypeFilterChange = (type: "r" | "p") => {
-    setTypeFilters((prev) => ({ ...prev, [type]: !prev[type] }))
-  }
 
   return (
     <>
@@ -119,9 +111,7 @@ export function PackageFilters() {
                 <ScrollArea className="h-full">
                   <div className="pr-4 space-y-2">
                     {isLoading ? (
-                      <div className="flex items-center justify-center h-full">
-                        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                      </div>
+                      Array.from({ length: 5 }).map((_, index) => <PackageButtonSkeleton key={index} />)
                     ) : displayedPackages.length > 0 ? (
                       displayedPackages.map((pkg, index) => (
                         <PackageButton
