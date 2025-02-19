@@ -1,54 +1,73 @@
 # gno.land Visualized
 
-gno.land Visualized is a project that helps users visualize all realms and packages from the gno.land blockchain as an interactive graph. It enables a better understanding of the relationships between realms and packages, and provides an interactive experience where users can follow all imports on-chain. Additionally, it allows filtering of packages by various parameters such as the creator, making it easier to explore and track the package ecosystem.
+This project visualizes the gno.land ecosystem using a Next.js frontend and a Go backend.
 
----
+## Prerequisites
 
-## Features
-* Visual representation of all realms and packages in the gno.land ecosystem.
-* Interactive graph to explore connections and imports between packages.
-* Filtering of packages by parameters like creator.
-* Real-time data fetching from the live chain and monorepo.
+- Node.js (v16 or higher)
+- npm or yarn
+- Go (v1.24 or higher)
+- Docker (optional, for containerized backend)
 
----
+## Running the Frontend
 
-## Technologies Used
-* Backend: Go, REST API, GraphQL, [tx-indexer](https://github.com/gnolang/tx-indexer).
-* Frontend: Next.js (React).
+1. Navigate to the frontend directory:
+    ```sh
+    cd gnoland-visualized
+    ```
 
----
+2. Install the dependencies:
+    ```sh
+    npm install
+    # or
+    yarn install
+    ```
 
-## How to Run
-To get the project up and running locally, follow these steps:
+3. Create a `.env.local` file:
+    ```sh
+    NEXT_PUBLIC_API_URL=http://localhost:8080
+    ```
 
-1. Clone this repository:
+4. Start the development server:
+    ```
+    npm start
+    ```
 
-``` bash
-git clone https://github.com/Nemanya8/gno.land-visualized.git
-cd gno.land-visualized
-```
-2. Clone the gno.land repository into the root of this project:
+5. Open your browser and go to `http://localhost:3000` to see the application.
 
-```bash
-git clone https://github.com/gnolang/gno.git
-```
+## Running the Backend
 
-3. Build and run backend
+1. Navigate to the backend directory:
+    ```sh
+    cd go-backend
+    ```
 
-```bash
-cd go-backend
-make build
-./go-backend
-```
+2. Build the backend:
+    ```sh
+    go build -o go-backend ./main
+    ```
 
-4. In another terminal build and run frontend
+3. Run the backend:
+    ```sh
+    ./go-backend
+    ```
 
-```bash
-cd gnoland-visualized
-npm install
-npm run build
-npm run start
+4. The backend server will be running at `http://localhost:8080`.
 
-// For development
-npm run dev
-```
+## Running with Docker (Optional)
+
+1. Navigate to the backend directory:
+    ```sh
+    cd go-backend
+    ```
+2. Build the Docker image:
+    ```sh
+    docker build -t go-backend .
+    ```
+3. Run the Docker container:
+    ```sh
+    docker run -p 8080:8080 go-backend
+    ```
+
+## Contributions
+Contributions are welcome! Please open an issue or submit a pull request.
