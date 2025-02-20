@@ -7,8 +7,10 @@ import { PackageButton } from "./PackageButton"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatAddress } from "@/utils/utils"
-import { Card, CardHeader, CardContent, CardFooter } from "../../../components/ui/card"
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
+import { ContribButton } from "./ContribButton"
+import { GnoScanButton } from "./GnoScanButton"
 
 export function PackageInfo() {
   const { selectedPackage, setSelectedPackage } = usePackage()
@@ -26,6 +28,17 @@ export function PackageInfo() {
       window.dispatchEvent(new CustomEvent("packageSelect", { detail: packageDir }))
     }
   }
+
+  const contributors = [
+    { name: "santala", percentage: 58.0 },
+    { name: "Blake", percentage: 26.12 },
+    { name: "Morgan", percentage: 15.38 },
+    { name: "6h057", percentage: 0.25 },
+    { name: "santala", percentage: 58.0 },
+    { name: "Blake", percentage: 26.12 },
+    { name: "Morgan", percentage: 15.38 },
+    { name: "6h057", percentage: 0.25 },
+  ]
 
   return (
     <AnimatePresence>
@@ -54,11 +67,27 @@ export function PackageInfo() {
             <div className="flex-shrink-0 px-4 pb-2">
               <p className="text-sm sm:text-base text-gray-300 overflow-hidden text-ellipsis">
                 <span className="block">Directory: {formatAddress(selectedPackage.Dir)}</span>
-                <span className="block">Creator: {formatAddress(selectedPackage.Creator)}</span>
               </p>
             </div>
             <CardContent className="flex-grow overflow-hidden flex flex-col px-4 py-2">
               <div className="space-y-4 flex-grow overflow-hidden flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <h3 className="text-sm sm:text-md font-semibold mb-2 text-gray-200">
+                    {selectedPackage.Creator === "monorepo" ? "Contributors" : "Creator"}
+                  </h3>
+                  <div className="w-full h-0.5 bg-[#4ecdc4] mb-2"></div>
+                  <ScrollArea className="h-[calc(100%-2rem)]">
+                    <div className="pr-4 space-y-2">
+                      {selectedPackage.Creator === "monorepo" ? (
+                        contributors.map((contributor, index) => (
+                          <ContribButton key={index} name={contributor.name} percentage={contributor.percentage} />
+                        ))
+                      ) : (
+                        <GnoScanButton address={selectedPackage.Creator} />
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
                 <div className="flex-1 min-h-0">
                   <h3 className="text-sm sm:text-md font-semibold mb-2 text-gray-200">Imports</h3>
                   <div className="w-full h-0.5 bg-[#c96934] mb-2"></div>
@@ -103,7 +132,9 @@ export function PackageInfo() {
               </Button>
               <Button
                 className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
-                onClick={() => window.open(`https://gno.studio/connect/view/${selectedPackage.Dir}?network=test5`, "_blank")}
+                onClick={() =>
+                  window.open(`https://gno.studio/connect/view/${selectedPackage.Dir}?network=test5`, "_blank")
+                }
               >
                 <Image src="/gnostudio.svg" alt="Gno Studio" width={25} height={25} className="mr-2" />
                 <span className="font-bold">See in Studio</span>
