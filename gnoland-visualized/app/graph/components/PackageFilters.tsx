@@ -63,7 +63,11 @@ export function PackageFilters() {
   }, [fetchFilteredPackages])
 
   useEffect(() => {
-    const filtered = filteredPackages.filter((pkg) => pkg.Name.toLowerCase().includes(searchTerm.toLowerCase()))
+    const filtered = filteredPackages.filter(
+      (pkg) =>
+      pkg.Dir.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.Creator.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     setDisplayedPackages(filtered)
   }, [searchTerm, filteredPackages])
 
