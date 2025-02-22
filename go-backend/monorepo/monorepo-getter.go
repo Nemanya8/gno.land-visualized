@@ -27,8 +27,9 @@ func GetMonorepoPackages() []domain.ExtendedPkg {
 		}
 
 		extendedPkgs[i] = domain.ExtendedPkg{
-			Pkg:     pkg,
-			Creator: "monorepo",
+			Pkg:          pkg,
+			Creator:      "monorepo",
+			Contributors: []domain.Contributor{},
 		}
 	}
 

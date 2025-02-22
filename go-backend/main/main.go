@@ -13,6 +13,16 @@ import (
 func main() {
 	packages := monorepo.GetMonorepoPackages()
 
+	for i := 0; i < len(packages); i++ {
+		pkgPath := "./gno/examples/" + packages[i].Dir
+		contributors, err := monorepo.GetContributors(pkgPath)
+		if err != nil {
+			fmt.Printf("Error getting contributors for package %s: %v\n", pkgPath, err)
+			continue
+		}
+		packages[i].Contributors = append(packages[i].Contributors, contributors...)
+	}
+
 	indexerPckgs, err := indexer.GetIndexerPackages()
 	if err != nil {
 		fmt.Println(err)

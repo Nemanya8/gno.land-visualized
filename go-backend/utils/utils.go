@@ -46,7 +46,8 @@ func ConvertToExtendedPackage(pkg domain.PackageData) domain.ExtendedPkg {
 			Imports: pkg.Imports,
 			Draft:   pkg.Draft,
 		},
-		Creator: pkg.Creator,
+		Creator:      pkg.Creator,
+		Contributors: []domain.Contributor{},
 	}
 }
 

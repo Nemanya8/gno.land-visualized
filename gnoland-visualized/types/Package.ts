@@ -5,5 +5,13 @@ export interface Package {
   Draft: boolean
   Creator: string
   Imported: string[]
+  Contributors: Contributor[]
+}
+
+export interface Contributor {
+  Name: string
+  Email: string
+  LOC: number
+  Percentage: number
 }
 

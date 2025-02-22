@@ -29,17 +29,6 @@ export function PackageInfo() {
     }
   }
 
-  const contributors = [
-    { name: "santala", percentage: 58.0 },
-    { name: "Blake", percentage: 26.12 },
-    { name: "Morgan", percentage: 15.38 },
-    { name: "6h057", percentage: 0.25 },
-    { name: "santala", percentage: 58.0 },
-    { name: "Blake", percentage: 26.12 },
-    { name: "Morgan", percentage: 15.38 },
-    { name: "6h057", percentage: 0.25 },
-  ]
-
   return (
     <AnimatePresence>
       {selectedPackage && (
@@ -73,14 +62,14 @@ export function PackageInfo() {
               <div className="space-y-4 flex-grow overflow-hidden flex flex-col">
                 <div className="flex-1 min-h-0">
                   <h3 className="text-sm sm:text-md font-semibold mb-2 text-gray-200">
-                    {selectedPackage.Creator === "monorepo" ? "Contributors" : "Creator"}
+                    {selectedPackage.Contributors.length > 0 ? "Contributors" : "Creator"}
                   </h3>
                   <div className="w-full h-0.5 bg-[#4ecdc4] mb-2"></div>
                   <ScrollArea className="h-[calc(100%-2rem)]">
                     <div className="pr-4 space-y-2">
-                      {selectedPackage.Creator === "monorepo" ? (
-                        contributors.map((contributor, index) => (
-                          <ContribButton key={index} name={contributor.name} percentage={contributor.percentage} />
+                      {selectedPackage.Contributors.length > 0 ? (
+                        selectedPackage.Contributors.map((contributor, index) => (
+                          <ContribButton key={index} {...contributor} />
                         ))
                       ) : (
                         <GnoScanButton address={selectedPackage.Creator} />
