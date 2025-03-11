@@ -22,6 +22,8 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [importedNodes, setImportedNodes] = useState(new Set())
   const [importingNodes, setImportingNodes] = useState(new Set())
+  const [contributorNodes, setContributorNodes] = useState(new Set())
+  const [selectedContributor, setSelectedContributor] = useState<string | null>(null)
   const { setSelectedPackage } = usePackage()
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
@@ -61,6 +63,10 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
 
   const updateSelectedNode = useCallback(
     (nodeId: string) => {
+      // Reset contributor selection
+      setSelectedContributor(null)
+      setContributorNodes(new Set())
+
       if (selectedNode === nodeId) {
         // If clicking the same node, reset highlights
         setHighlightLinks(new Set())
@@ -97,6 +103,41 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
     [graphData.links, selectedNode, packages, setSelectedPackage],
   )
 
+  const handleContributorSelect = useCallback(
+    (contributorName: string) => {
+      // Reset node selection
+      setHighlightLinks(new Set())
+      setImportedNodes(new Set())
+      setImportingNodes(new Set())
+      setSelectedNode(null)
+
+      if (selectedContributor === contributorName) {
+        // If clicking the same contributor, reset highlights
+        setContributorNodes(new Set())
+        setSelectedContributor(null)
+        setSelectedPackage(null)
+      } else {
+        // Find all packages this contributor has worked on
+        const contributorPackages = new Set<string>()
+
+        packages.forEach((pkg) => {
+          const hasContributed = pkg.Contributors.some((contributor) => contributor.Name === contributorName)
+
+          if (hasContributed) {
+            contributorPackages.add(pkg.Dir)
+          }
+        })
+
+        setContributorNodes(contributorPackages)
+        setSelectedContributor(contributorName)
+
+        // Close the package info panel
+        setSelectedPackage(null)
+      }
+    },
+    [packages, selectedContributor, setSelectedPackage],
+  )
+
   const handleNodeClick = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any) => {
@@ -117,15 +158,28 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
     }
   }, [updateSelectedNode])
 
+  useEffect(() => {
+    const handleContributorSelectEvent = (event: CustomEvent) => {
+      handleContributorSelect(event.detail.contributorName)
+    }
+
+    window.addEventListener("contributorSelect", handleContributorSelectEvent as EventListener)
+
+    return () => {
+      window.removeEventListener("contributorSelect", handleContributorSelectEvent as EventListener)
+    }
+  }, [handleContributorSelect])
+
   const updateNodeColor = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any) => {
+      if (selectedContributor && contributorNodes.has(node.id)) return "#9c59b6" // Purple for contributor nodes
       if (node.id === selectedNode) return "#ff6b6b"
       if (importedNodes.has(node.id)) return "#c96934"
       if (importingNodes.has(node.id)) return "#4ecdc4"
       return node.draft ? "#c7c7c7" : "#f7f7f7"
     },
-    [selectedNode, importedNodes, importingNodes],
+    [selectedNode, importedNodes, importingNodes, selectedContributor, contributorNodes],
   )
 
   const updateLinkColor = useCallback(
@@ -138,9 +192,15 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
           return "#4ecdc4"
         }
       }
+
+      // Highlight links between contributor nodes
+      if (selectedContributor && contributorNodes.has(link.source.id) && contributorNodes.has(link.target.id)) {
+        return "#9c59b6" // Purple for contributor links
+      }
+
       return "#a5a5a5"
     },
-    [highlightLinks, selectedNode],
+    [highlightLinks, selectedNode, selectedContributor, contributorNodes],
   )
 
   useEffect(() => {
@@ -172,9 +232,16 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
           nodeLabel={(node: any) => `${node.name} - ${node.creator}`}
           nodeColor={updateNodeColor}
           linkColor={updateLinkColor}
-          linkWidth={(link) => (highlightLinks.has(link) ? 2 : 1)}
+          linkWidth={(link) => {
+            if (highlightLinks.has(link)) return 2
+            return 1
+          }}
           linkDirectionalParticles={2}
-          linkDirectionalParticleWidth={(link) => (highlightLinks.has(link) ? 2 : 0)}
+          linkDirectionalParticleWidth={(link) => {
+            if (highlightLinks.has(link)) return 2
+
+            return 0
+          }}
           onNodeClick={handleNodeClick}
           backgroundColor="#1a1a1a"
         />

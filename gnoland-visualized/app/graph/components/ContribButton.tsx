@@ -1,9 +1,15 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import type { Contributor } from "@/types/Package"
 
 export function ContribButton({ Name, LOC, Percentage }: Contributor) {
   const handleClick = () => {
-    // TODO: Open GitHub account
+    window.dispatchEvent(
+      new CustomEvent("contributorSelect", {
+        detail: { contributorName: Name },
+      }),
+    )
   }
 
   return (
