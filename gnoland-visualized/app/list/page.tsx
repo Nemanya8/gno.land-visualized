@@ -57,7 +57,7 @@ export default function PackageList() {
     if (packages.length === 0) return
 
     const filtered = packages.filter((pkg) => {
-      const dirFilter = (filterP && pkg.Dir.startsWith("/p")) || (filterR && pkg.Dir.startsWith("/r"))
+      const dirFilter = (filterP && pkg.Dir.startsWith("gno.land/p")) || (filterR && pkg.Dir.startsWith("gno.land/r"))
 
       const importsFilter = pkg.Imports.length >= importCount
       const importedFilter = pkg.Imported.length >= importedCount
