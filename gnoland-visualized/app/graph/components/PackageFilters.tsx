@@ -24,7 +24,6 @@ export function PackageFilters() {
   const [typeFilters, setTypeFilters] = useState({ r: true, p: true })
   const [isLoading, setIsLoading] = useState(true)
   const [selectedContributor, setSelectedContributor] = useState<Contributor | null>(null)
-  const [contributorPackages, setContributorPackages] = useState<Package[]>([])
   const [contributorMap, setContributorMap] = useState<Record<string, Package[]>>({})
   const [contributorSearchTerm, setContributorSearchTerm] = useState("")
   const [sortedContributors, setSortedContributors] = useState<[string, Package[]][]>([])
@@ -71,7 +70,6 @@ export function PackageFilters() {
 
   const clearContributorSelection = () => {
     setSelectedContributor(null)
-    setContributorPackages([])
     window.dispatchEvent(
       new CustomEvent("contributorSelect", {
         detail: { contributorName: null },
@@ -157,10 +155,6 @@ export function PackageFilters() {
       }
 
       setSelectedContributor(foundContributor)
-
-      const packagesForContributor = packages.filter((pkg) => pkg.Contributors.some((c) => c.Name === contributorName))
-      setContributorPackages(packagesForContributor)
-
       fetchFilteredPackages()
       setIsOpen(true)
     }
@@ -170,7 +164,7 @@ export function PackageFilters() {
     return () => {
       window.removeEventListener("contributorSelect", handleContributorSelectEvent as EventListener)
     }
-  }, [packages])
+  }, [packages, fetchFilteredPackages])
 
   return (
     <>
@@ -293,7 +287,6 @@ export function PackageFilters() {
                               } else {
                                 const foundContributor = packages[0]?.Contributors.find((c) => c.Name === contributor)
                                 setSelectedContributor(foundContributor || null)
-                                setContributorPackages(packages)
                                 window.dispatchEvent(
                                   new CustomEvent("contributorSelect", {
                                     detail: { contributorName: contributor },
