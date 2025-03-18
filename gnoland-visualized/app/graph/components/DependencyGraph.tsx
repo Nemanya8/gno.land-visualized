@@ -31,6 +31,8 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   useEffect(() => {
     const importCounts: { [key: string]: number } = {}
 
+    console.log(packages)
+
     packages.forEach((pkg) => {
       pkg.Imports.forEach((imp) => {
         if (!importCounts[imp]) {
@@ -54,6 +56,8 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
         source: pkg.Dir,
         target: imp,
       })),
+    ).filter(link => 
+      nodes.some(node => node.id === link.target)
     )
 
     const uniqueNodes = Array.from(new Map(nodes.map((node) => [node.id, node])).values())
@@ -63,19 +67,16 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
 
   const updateSelectedNode = useCallback(
     (nodeId: string) => {
-      // Reset contributor selection
       setSelectedContributor(null)
       setContributorNodes(new Set())
 
       if (selectedNode === nodeId) {
-        // If clicking the same node, reset highlights
         setHighlightLinks(new Set())
         setImportedNodes(new Set())
         setImportingNodes(new Set())
         setSelectedNode(null)
         setSelectedPackage(null)
       } else {
-        // Highlight the clicked node and its direct connections
         const connectedNodes = new Set([nodeId])
         const connectedLinks = new Set()
         const importedNodes = new Set()
@@ -105,19 +106,16 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
 
   const handleContributorSelect = useCallback(
     (contributorName: string) => {
-      // Reset node selection
       setHighlightLinks(new Set())
       setImportedNodes(new Set())
       setImportingNodes(new Set())
       setSelectedNode(null)
 
       if (selectedContributor === contributorName) {
-        // If clicking the same contributor, reset highlights
         setContributorNodes(new Set())
         setSelectedContributor(null)
         setSelectedPackage(null)
       } else {
-        // Find all packages this contributor has worked on
         const contributorPackages = new Set<string>()
 
         packages.forEach((pkg) => {
@@ -131,7 +129,6 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
         setContributorNodes(contributorPackages)
         setSelectedContributor(contributorName)
 
-        // Close the package info panel
         setSelectedPackage(null)
       }
     },
@@ -193,9 +190,8 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
         }
       }
 
-      // Highlight links between contributor nodes
       if (selectedContributor && contributorNodes.has(link.source.id) && contributorNodes.has(link.target.id)) {
-        return "#9c59b6" // Purple for contributor links
+        return "#9c59b6"
       }
 
       return "#a5a5a5"
@@ -239,11 +235,11 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
           linkDirectionalParticles={2}
           linkDirectionalParticleWidth={(link) => {
             if (highlightLinks.has(link)) return 2
-
             return 0
           }}
           onNodeClick={handleNodeClick}
           backgroundColor="#1a1a1a"
+          nodeResolution={16}
         />
       )}
     </div>
