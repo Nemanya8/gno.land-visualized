@@ -28,7 +28,6 @@ export function PackageFilters() {
   const [contributorMap, setContributorMap] = useState<Record<string, Package[]>>({})
   const [contributorSearchTerm, setContributorSearchTerm] = useState("")
   const [sortedContributors, setSortedContributors] = useState<[string, Package[]][]>([])
-  const [useClientSideFiltering, setUseClientSideFiltering] = useState(false)
 
   useEffect(() => {
     const newContributorMap: Record<string, Package[]> = {}
@@ -50,20 +49,6 @@ export function PackageFilters() {
 
     setSortedContributors(sorted)
   }, [contributorMap, contributorSearchTerm])
-
-  useEffect(() => {
-    const checkApiAvailability = async () => {
-      try {
-        await getFilteredPackages("r")
-        setUseClientSideFiltering(false)
-      } catch (error) {
-        console.warn("API unavailable, falling back to client-side filtering", error)
-        setUseClientSideFiltering(true)
-      }
-    }
-
-    checkApiAvailability()
-  }, [])
 
   const onClose = () => {
     setIsOpen(false)
@@ -94,85 +79,64 @@ export function PackageFilters() {
     )
   }
 
-  const filterPackagesByType = useCallback(
-    (pkgs: Package[]) => {
-      return pkgs.filter((pkg) => {
-        const isRealm = pkg.Dir.startsWith("r/")
-        const isPackage = pkg.Dir.startsWith("p/")
-
-        if (typeFilters.r && isRealm) return true
-        if (typeFilters.p && isPackage) return true
-
-        if (!typeFilters.r && !typeFilters.p) return false
-
-        if (!typeFilters.r && !isRealm) return true
-        if (!typeFilters.p && !isPackage) return true
-
-        return false
-      })
-    },
-    [typeFilters],
-  )
-
   const fetchFilteredPackages = useCallback(async () => {
-    if (selectedContributor) return
-
     setIsLoading(true)
     try {
+      let results: Package[] = []
+
       if (typeFilters.r && typeFilters.p) {
-        setFilteredPackages(packages)
-      } else if (!typeFilters.r && !typeFilters.p) {
-        setFilteredPackages([])
-      } else if (useClientSideFiltering) {
-        const filtered = filterPackagesByType(packages)
-        setFilteredPackages(filtered)
-      } else {
+        results = [...packages]
+      } else if (typeFilters.r) {
         try {
-          let filteredResults: Package[] = []
-
-          if (typeFilters.r) {
-            const rPackages = await getFilteredPackages("r")
-            filteredResults = [...filteredResults, ...rPackages]
-          }
-
-          if (typeFilters.p) {
-            const pPackages = await getFilteredPackages("p")
-            filteredResults = [...filteredResults, ...pPackages]
-          }
-
-          setFilteredPackages(filteredResults)
-        } catch (apiError) {
-          console.error("API fetch failed, switching to client-side filtering permanently", apiError)
-          setUseClientSideFiltering(true)
-
-          const filtered = filterPackagesByType(packages)
-          setFilteredPackages(filtered)
+          results = await getFilteredPackages("r")
+        } catch (error) {
+          console.error("Error fetching r packages:", error)
+          results = packages.filter((pkg) => pkg.Dir.startsWith("r/"))
+        }
+      } else if (typeFilters.p) {
+        try {
+          results = await getFilteredPackages("p")
+        } catch (error) {
+          console.error("Error fetching p packages:", error)
+          results = packages.filter((pkg) => pkg.Dir.startsWith("p/"))
         }
       }
+
+      if (selectedContributor) {
+        results = results.filter((pkg) => pkg.Contributors.some((c) => c.Name === selectedContributor.Name))
+      }
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase()
+        results = results.filter((pkg) => pkg.Name.toLowerCase().includes(term) || pkg.Dir.toLowerCase().includes(term))
+      }
+
+      setFilteredPackages(results)
+      setDisplayedPackages(results)
     } catch (error) {
       console.error("Error in fetchFilteredPackages:", error)
-      setFilteredPackages(typeFilters.r || typeFilters.p ? packages : [])
+      setFilteredPackages([])
+      setDisplayedPackages([])
     } finally {
       setIsLoading(false)
     }
-  }, [typeFilters, packages, selectedContributor, useClientSideFiltering, filterPackagesByType])
+  }, [typeFilters, packages, selectedContributor, searchTerm])
 
   useEffect(() => {
     fetchFilteredPackages()
   }, [fetchFilteredPackages])
 
   useEffect(() => {
-    if (selectedContributor) {
-      setDisplayedPackages(contributorPackages)
+    if (searchTerm.trim() === "") {
+      setDisplayedPackages(filteredPackages)
     } else {
+      const term = searchTerm.toLowerCase()
       const filtered = filteredPackages.filter(
-        (pkg) =>
-          pkg.Dir.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          pkg.Creator.toLowerCase().includes(searchTerm.toLowerCase()),
+        (pkg) => pkg.Name.toLowerCase().includes(term) || pkg.Dir.toLowerCase().includes(term),
       )
       setDisplayedPackages(filtered)
     }
-  }, [searchTerm, filteredPackages, selectedContributor, contributorPackages])
+  }, [searchTerm, filteredPackages])
 
   useEffect(() => {
     const handleContributorSelectEvent = (event: CustomEvent) => {
@@ -183,22 +147,13 @@ export function PackageFilters() {
         return
       }
 
-      const packagesWorkedOn: Package[] = []
-      let contributor: Contributor | null = null
-
-      packages.forEach((pkg) => {
-        const foundContributor = pkg.Contributors.find((c) => c.Name === contributorName)
-        if (foundContributor) {
-          packagesWorkedOn.push(pkg)
-          if (!contributor) {
-            contributor = foundContributor
-          }
-        }
-      })
+      const contributor: Contributor | null = null
 
       setSelectedContributor(contributor)
-      setContributorPackages(packagesWorkedOn)
+      fetchFilteredPackages()
       setIsOpen(true)
+
+      setDisplayedPackages(filteredPackages)
     }
 
     window.addEventListener("contributorSelect", handleContributorSelectEvent as EventListener)
