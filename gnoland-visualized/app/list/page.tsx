@@ -19,7 +19,6 @@ export default function PackageList() {
   const [expandedPackage, setExpandedPackage] = useState<string | null>(null)
   const fetchedRef = useRef(false)
 
-  // Filter states
   const [filterP, setFilterP] = useState<boolean>(true)
   const [filterR, setFilterR] = useState<boolean>(true)
   const [importCount, setImportCount] = useState<number>(0)
@@ -36,14 +35,12 @@ export default function PackageList() {
         const fetchedPackages = await getPackages()
         setPackages(fetchedPackages)
 
-        // Find max values for sliders
         const maxImportsValue = Math.max(...fetchedPackages.map((pkg) => pkg.Imports.length))
         const maxImportedValue = Math.max(...fetchedPackages.map((pkg) => pkg.Imported.length))
 
         setMaxImports(maxImportsValue)
         setMaxImported(maxImportedValue)
 
-        // Initialize sliders to 0
         setImportCount(0)
         setImportedCount(0)
       } catch (error) {
@@ -56,15 +53,12 @@ export default function PackageList() {
     fetchPackages()
   }, [])
 
-  // Apply filters whenever filter states change
   useEffect(() => {
     if (packages.length === 0) return
 
     const filtered = packages.filter((pkg) => {
-      // Filter by directory
       const dirFilter = (filterP && pkg.Dir.startsWith("/p")) || (filterR && pkg.Dir.startsWith("/r"))
 
-      // Filter by import counts
       const importsFilter = pkg.Imports.length >= importCount
       const importedFilter = pkg.Imported.length >= importedCount
 
@@ -155,7 +149,6 @@ export default function PackageList() {
         </div>
       </div>
 
-      {/* Package Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredPackages.length > 0 ? (
           filteredPackages.map((pkg) => (
