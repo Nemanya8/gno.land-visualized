@@ -26,6 +26,7 @@ export function PackageFilters() {
   const [selectedContributor, setSelectedContributor] = useState<Contributor | null>(null)
   const [contributorPackages, setContributorPackages] = useState<Package[]>([])
   const [contributorMap, setContributorMap] = useState<Record<string, Package[]>>({})
+  const [useClientSideFiltering, setUseClientSideFiltering] = useState(false)
 
   useEffect(() => {
     const newContributorMap: Record<string, Package[]> = {}
@@ -40,12 +41,31 @@ export function PackageFilters() {
     setContributorMap(newContributorMap)
   }, [packages])
 
+  // Check if API is available on component mount
+  useEffect(() => {
+    const checkApiAvailability = async () => {
+      try {
+        // Try to fetch a small amount of data to test the API
+        await getFilteredPackages("r")
+        setUseClientSideFiltering(false)
+      } catch (error) {
+        console.warn("API unavailable, falling back to client-side filtering", error)
+        setUseClientSideFiltering(true)
+      }
+    }
+
+    checkApiAvailability()
+  }, [])
+
   const onClose = () => {
     setIsOpen(false)
   }
 
   const handleTypeFilterChange = (type: "r" | "p") => {
-    setTypeFilters((prev) => ({ ...prev, [type]: !prev[type] }))
+    setTypeFilters((prev) => {
+      const newFilters = { ...prev, [type]: !prev[type] }
+      return newFilters
+    })
   }
 
   const handlePackageClick = (packageDir: string) => {
@@ -66,27 +86,74 @@ export function PackageFilters() {
     )
   }
 
+  // Helper function for client-side filtering
+  const filterPackagesByType = useCallback(
+    (pkgs: Package[]) => {
+      return pkgs.filter((pkg) => {
+        // Determine if it's a realm or package based on directory prefix
+        const isRealm = pkg.Dir.startsWith("r/")
+        const isPackage = pkg.Dir.startsWith("p/")
+
+        // Apply filters
+        if (typeFilters.r && isRealm) return true
+        if (typeFilters.p && isPackage) return true
+
+        // If neither filter is active, include all packages that don't match either pattern
+        if (!typeFilters.r && !typeFilters.p) return false
+
+        // If only one filter is active but the package doesn't match either pattern,
+        // include it only if it doesn't match the inactive filter
+        if (!typeFilters.r && !isRealm) return true
+        if (!typeFilters.p && !isPackage) return true
+
+        return false
+      })
+    },
+    [typeFilters],
+  )
+
   const fetchFilteredPackages = useCallback(async () => {
     if (selectedContributor) return
 
     setIsLoading(true)
     try {
-      let rPackages: Package[] = []
-      let pPackages: Package[] = []
-
       if (typeFilters.r && typeFilters.p) {
         setFilteredPackages(packages)
+      } else if (!typeFilters.r && !typeFilters.p) {
+        setFilteredPackages([])
+      } else if (useClientSideFiltering) {
+        const filtered = filterPackagesByType(packages)
+        setFilteredPackages(filtered)
       } else {
-        if (typeFilters.r) rPackages = await getFilteredPackages("r")
-        if (typeFilters.p) pPackages = await getFilteredPackages("p")
-        setFilteredPackages([...rPackages, ...pPackages])
+        try {
+          let filteredResults: Package[] = []
+
+          if (typeFilters.r) {
+            const rPackages = await getFilteredPackages("r")
+            filteredResults = [...filteredResults, ...rPackages]
+          }
+
+          if (typeFilters.p) {
+            const pPackages = await getFilteredPackages("p")
+            filteredResults = [...filteredResults, ...pPackages]
+          }
+
+          setFilteredPackages(filteredResults)
+        } catch (apiError) {
+          console.error("API fetch failed, switching to client-side filtering permanently", apiError)
+          setUseClientSideFiltering(true)
+
+          const filtered = filterPackagesByType(packages)
+          setFilteredPackages(filtered)
+        }
       }
     } catch (error) {
-      console.error("Error fetching packages:", error)
+      console.error("Error in fetchFilteredPackages:", error)
+      setFilteredPackages(typeFilters.r || typeFilters.p ? packages : [])
     } finally {
       setIsLoading(false)
     }
-  }, [typeFilters, packages, selectedContributor])
+  }, [typeFilters, packages, selectedContributor, useClientSideFiltering, filterPackagesByType])
 
   useEffect(() => {
     fetchFilteredPackages()
@@ -191,7 +258,7 @@ export function PackageFilters() {
                   <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
 
                   <ScrollArea className="h-[40vh]">
-                    <div className="pr-4 space-y-2">
+                    <div className="grid grid-cols-1 gap-2 pr-2">
                       {isLoading && !selectedContributor ? (
                         Array.from({ length: 5 }).map((_, index) => <PackageButtonSkeleton key={index} />)
                       ) : displayedPackages.length > 0 ? (
@@ -201,7 +268,7 @@ export function PackageFilters() {
                             name={pkg.Name}
                             dir={pkg.Dir}
                             onClick={() => handlePackageClick(pkg.Dir)}
-                            />
+                          />
                         ))
                       ) : (
                         <div className="flex items-center justify-center h-full py-4">
@@ -242,7 +309,9 @@ export function PackageFilters() {
                             key={contributor}
                             variant="ghost"
                             className={`w-full justify-between text-left py-2 px-3 ${
-                              isSelected ? "bg-[#3a3a3d] text-white" : "bg-[#28282B] text-white hover:bg-[#3a3a3d]"
+                              isSelected
+                                ? "bg-[#3a3a3d] text-white"
+                                : "bg-[#28282B] text-white hover:bg-[#3a3a3d] hover:text-white"
                             } flex items-center`}
                             onClick={() => {
                               if (isSelected) {
