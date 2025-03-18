@@ -26,6 +26,8 @@ export function PackageFilters() {
   const [selectedContributor, setSelectedContributor] = useState<Contributor | null>(null)
   const [contributorPackages, setContributorPackages] = useState<Package[]>([])
   const [contributorMap, setContributorMap] = useState<Record<string, Package[]>>({})
+  const [contributorSearchTerm, setContributorSearchTerm] = useState("")
+  const [sortedContributors, setSortedContributors] = useState<[string, Package[]][]>([])
   const [useClientSideFiltering, setUseClientSideFiltering] = useState(false)
 
   useEffect(() => {
@@ -41,11 +43,17 @@ export function PackageFilters() {
     setContributorMap(newContributorMap)
   }, [packages])
 
-  // Check if API is available on component mount
+  useEffect(() => {
+    const sorted = Object.entries(contributorMap)
+      .sort((a, b) => b[1].length - a[1].length)
+      .filter(([contributor]) => contributor.toLowerCase().includes(contributorSearchTerm.toLowerCase()))
+
+    setSortedContributors(sorted)
+  }, [contributorMap, contributorSearchTerm])
+
   useEffect(() => {
     const checkApiAvailability = async () => {
       try {
-        // Try to fetch a small amount of data to test the API
         await getFilteredPackages("r")
         setUseClientSideFiltering(false)
       } catch (error) {
@@ -86,23 +94,17 @@ export function PackageFilters() {
     )
   }
 
-  // Helper function for client-side filtering
   const filterPackagesByType = useCallback(
     (pkgs: Package[]) => {
       return pkgs.filter((pkg) => {
-        // Determine if it's a realm or package based on directory prefix
         const isRealm = pkg.Dir.startsWith("r/")
         const isPackage = pkg.Dir.startsWith("p/")
 
-        // Apply filters
         if (typeFilters.r && isRealm) return true
         if (typeFilters.p && isPackage) return true
 
-        // If neither filter is active, include all packages that don't match either pattern
         if (!typeFilters.r && !typeFilters.p) return false
 
-        // If only one filter is active but the package doesn't match either pattern,
-        // include it only if it doesn't match the inactive filter
         if (!typeFilters.r && !isRealm) return true
         if (!typeFilters.p && !isPackage) return true
 
@@ -286,23 +288,31 @@ export function PackageFilters() {
                 <div className="mt-2">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-md font-semibold text-gray-200">Contributors</h3>
-                    {selectedContributor && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs text-gray-400 hover:bg-[#28282B] hover:text-gray-100 h-8 px-2"
-                        onClick={clearContributorSelection}
-                      >
-                        <X className="h-3 w-3 mr-1" />
-                        Clear filter
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {selectedContributor && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-gray-400 hover:bg-[#28282B] hover:text-gray-100 h-8 px-2"
+                          onClick={clearContributorSelection}
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Clear filter
+                        </Button>
+                      )}
+                    </div>
                   </div>
+                  <Input
+                    placeholder="Search contributors..."
+                    value={contributorSearchTerm}
+                    onChange={(e) => setContributorSearchTerm(e.target.value)}
+                    className="mb-2"
+                  />
                   <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
 
                   <ScrollArea className="h-[30vh]">
                     <div className="grid grid-cols-1 gap-2 pr-2">
-                      {Object.entries(contributorMap).map(([contributor, packages]) => {
+                      {sortedContributors.map(([contributor, packages]) => {
                         const isSelected = selectedContributor?.Name === contributor
                         return (
                           <Button
@@ -310,7 +320,7 @@ export function PackageFilters() {
                             variant="ghost"
                             className={`w-full justify-between text-left py-2 px-3 ${
                               isSelected
-                                ? "bg-[#3a3a3d] text-white"
+                                ? "bg-[#3a3a3d] text-white hover:bg-[#444447]"
                                 : "bg-[#28282B] text-white hover:bg-[#3a3a3d] hover:text-white"
                             } flex items-center`}
                             onClick={() => {
