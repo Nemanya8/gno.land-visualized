@@ -218,7 +218,7 @@ export function PackageFilters() {
                 <div className="mb-4">
                   <h3 className="text-md font-semibold mb-2 text-gray-200">
                     {selectedContributor
-                      ? `Packages by ${selectedContributor.Name} (${contributorPackages.length})`
+                      ? `Packages by ${selectedContributor.Name}`
                       : `All Packages (${displayedPackages.length})`}
                   </h3>
                   <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
