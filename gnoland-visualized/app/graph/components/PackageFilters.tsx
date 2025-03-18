@@ -147,13 +147,22 @@ export function PackageFilters() {
         return
       }
 
-      const contributor: Contributor | null = null
+      let foundContributor: Contributor | null = null
+      for (const pkg of packages) {
+        const contributor = pkg.Contributors.find((c) => c.Name === contributorName)
+        if (contributor) {
+          foundContributor = contributor
+          break
+        }
+      }
 
-      setSelectedContributor(contributor)
+      setSelectedContributor(foundContributor)
+
+      const packagesForContributor = packages.filter((pkg) => pkg.Contributors.some((c) => c.Name === contributorName))
+      setContributorPackages(packagesForContributor)
+
       fetchFilteredPackages()
       setIsOpen(true)
-
-      setDisplayedPackages(filteredPackages)
     }
 
     window.addEventListener("contributorSelect", handleContributorSelectEvent as EventListener)
