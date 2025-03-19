@@ -30,6 +30,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   const { setSelectedPackage } = usePackage()
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const graph2DRef = useRef<any>(null)
 
   useEffect(() => {
     const importCounts: { [key: string]: number } = {}
@@ -64,6 +65,13 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
 
     setGraphData({ nodes: uniqueNodes, links })
   }, [packages])
+
+  useEffect(() => {
+    if (!is3D && graph2DRef.current) {
+      graph2DRef.current.d3Force("charge").strength(-300)
+      graph2DRef.current.d3Force("link").distance(100)
+    }
+  }, [is3D, graphData])
 
   const updateSelectedNode = useCallback(
     (nodeId: string) => {
@@ -252,7 +260,20 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
               nodeResolution={16}
             />
           ) : (
-            <ForceGraph2D width={dimensions.width} height={dimensions.height} {...commonGraphProps} />
+            <ForceGraph2D
+              ref={graph2DRef}
+              width={dimensions.width}
+              height={dimensions.height}
+              {...commonGraphProps}
+              onEngineStop={() => {
+                if (!is3D && graph2DRef.current) {
+                  graph2DRef.current.d3Force("charge")?.strength(-300);
+                  graph2DRef.current.d3Force("link")?.distance(100);
+                  graph2DRef.current.refresh();
+                }
+              }}
+              nodeRelSize={6}
+            />
           ))}
       </div>
     </div>

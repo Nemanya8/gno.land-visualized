@@ -1,7 +1,6 @@
 "use client"
 import Image from "next/image"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
 
@@ -12,24 +11,24 @@ interface GraphHeaderProps {
 
 export default function GraphHeader({ is3D, setIs3D }: GraphHeaderProps) {
   return (
-    <header className="flex items-center justify-between w-full px-6 py-3 bg-[#1a1a1a] border-b border-gray-800">
-      <div className="flex items-center gap-2">
-        <Label htmlFor="view-toggle" className="text-white text-sm">
-          2D
-        </Label>
-        <Switch id="view-toggle" checked={is3D} onCheckedChange={setIs3D} />
-        <Label htmlFor="view-toggle" className="text-white text-sm">
-          3D
-        </Label>
+    <header className="flex items-center justify-between w-full h-[20vh] px-6 bg-[#1a1a1a] border-b border-gray-800">
+      <div className="flex-1 flex justify-start">
+        <Button
+          onClick={() => setIs3D(!is3D)}
+          className="aspect-square h-12 w-12 font-bold"
+          variant={is3D ? "default" : "outline"}
+        >
+          {is3D ? "3D" : "2D"}
+        </Button>
       </div>
 
-      <div className="flex items-center justify-center">
-        <Image src="/gnoland.svg" alt="Gnoland Logo" width={120} height={40} className="h-8 w-auto" />
+      <div className="flex-1 flex items-center justify-center">
+        <Image src="/gnoland.svg" alt="Gnoland Logo" width={140} height={50} className="h-12 w-auto" />
       </div>
 
-      <div>
+      <div className="flex-1 flex justify-end">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-1.5 text-white bg-gray-800 rounded-md hover:bg-gray-700 transition-colors">
+          <DropdownMenuTrigger className="flex items-center gap-1 px-4 py-2 text-white bg-gray-800 rounded-md hover:bg-gray-700 transition-colors">
             Network <ChevronDown className="h-4 w-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
