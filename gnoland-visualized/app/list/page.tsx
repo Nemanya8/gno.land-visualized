@@ -76,8 +76,8 @@ export default function PackageList() {
     console.log("Total packages before filtering:", packages.length)
 
     const filtered = packages.filter((pkg) => {
-      const isDirP = pkg.Dir?.startsWith("/p") || false
-      const isDirR = pkg.Dir?.startsWith("/r") || false
+      const isDirP = pkg.Dir?.startsWith("gno.land/p") || false
+      const isDirR = pkg.Dir?.startsWith("gno.land/r") || false
 
       const dirFilter = (filterP && isDirP) || (filterR && isDirR) || (!isDirP && !isDirR) // Include packages that don't start with /p or /r
 
@@ -153,8 +153,8 @@ export default function PackageList() {
     <div className="min-h-screen bg-[#18181a] text-white">
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Package List</h1>
-          <Button onClick={downloadCSV} className="flex items-center gap-2" variant="outline">
+          <h1 className="text-2xl font-bold">Data Panel</h1>
+          <Button onClick={downloadCSV} className="flex items-center gap-2 bg-[#28282B] text-white hover:bg-[#3a3a3d]">
             <Download size={16} />
             Download CSV
           </Button>
@@ -165,7 +165,6 @@ export default function PackageList() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-md font-medium mb-2">Directory</h3>
               <div className="flex gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -173,7 +172,7 @@ export default function PackageList() {
                     checked={filterP}
                     onCheckedChange={(checked) => setFilterP(checked as boolean)}
                   />
-                  <Label htmlFor="filter-p">/p</Label>
+                  <Label htmlFor="filter-p">Package</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -181,7 +180,7 @@ export default function PackageList() {
                     checked={filterR}
                     onCheckedChange={(checked) => setFilterR(checked as boolean)}
                   />
-                  <Label htmlFor="filter-r">/r</Label>
+                  <Label htmlFor="filter-r">Realm</Label>
                 </div>
               </div>
             </div>
@@ -227,7 +226,7 @@ export default function PackageList() {
             filteredPackages.map((pkg) => (
               <Card
                 key={`${pkg.Dir}-${pkg.Name}-${pkg.Creator || ""}`}
-                className="overflow-hidden bg-gray-800 border-gray-700"
+                className="overflow-hidden bg-[#28282B] border-[#28282B]"
               >
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
@@ -242,7 +241,7 @@ export default function PackageList() {
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleExpand(pkg)}
-                      className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-700"
+                      className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-[#3a3a3d]"
                     >
                       {expandedPackages.includes(`${pkg.Dir}-${pkg.Name}`) ? <ChevronUp /> : <ChevronDown />}
                     </Button>
@@ -290,10 +289,10 @@ export default function PackageList() {
                       {pkg.Imports.length > 0 && (
                         <div>
                           <h3 className="text-sm font-medium text-gray-300">Imports</h3>
-                          <ScrollArea className="h-24 w-full mt-1 rounded border border-gray-700 p-2">
+                          <ScrollArea className="h-24 w-full mt-1 rounded border border-bg-[#3a3a3d] p-2">
                             <div className="flex flex-wrap gap-1">
                               {pkg.Imports.map((imp, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs bg-gray-700 text-gray-300">
+                                <Badge key={index} variant="secondary" className="text-xs bg-[#3a3a3d] text-gray-300 hover:none">
                                   {imp}
                                 </Badge>
                               ))}
@@ -305,16 +304,12 @@ export default function PackageList() {
                       {pkg.Imported.length > 0 && (
                         <div>
                           <h3 className="text-sm font-medium text-gray-300">Imported by</h3>
-                          <ScrollArea className="h-24 w-full mt-1 rounded border border-gray-700 p-2">
+                          <ScrollArea className="h-24 w-full mt-1 rounded border border-bg-[#3a3a3d] p-2">
                             <div className="flex flex-wrap gap-1">
                               {pkg.Imported.map((imp, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="outline"
-                                  className="text-xs bg-transparent text-gray-300 border-gray-600"
-                                >
-                                  {imp}
-                                </Badge>
+                                <Badge key={index} variant="secondary" className="text-xs bg-[#3a3a3d] text-gray-300 hover:none">
+                                {imp}
+                              </Badge>
                               ))}
                             </div>
                           </ScrollArea>
