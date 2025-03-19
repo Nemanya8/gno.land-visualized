@@ -69,10 +69,8 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
 
   useEffect(() => {
     if (!is3D && graph2DRef.current) {
-      // Adjust the charge strength to decrease node overlap
-      graph2DRef.current.d3Force("charge").strength(-1000); // Change to a lower value for more spread
-      // Adjust the link distance to increase space between nodes
-      graph2DRef.current.d3Force("link").distance(700); // Increase distance for more separation
+      graph2DRef.current.d3Force("charge").strength(-1000);
+      graph2DRef.current.d3Force("link").distance(700);
     }
   }, [is3D, graphData])
 
@@ -272,7 +270,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
                 if (!is3D && graph2DRef.current) {
                   graph2DRef.current.d3Force("charge")?.strength(-500);
                   graph2DRef.current.d3Force("link")?.distance(200);
-                  graph2DRef.current.refresh();
+                  graph2DRef.current.refresh(); // Make sure to refresh the graph
                 }
               }}
               nodeRelSize={6}
