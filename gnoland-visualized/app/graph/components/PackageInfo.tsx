@@ -64,7 +64,7 @@ export function PackageInfo() {
                   <h3 className="text-sm sm:text-md font-semibold mb-2 text-gray-200">
                     {selectedPackage.Contributors.length > 0 ? "Contributors" : "Creator"}
                   </h3>
-                  <div className="w-full h-0.5 bg-[#4ecdc4] mb-2"></div>
+                  <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
                   <ScrollArea className="h-[calc(100%-2rem)]">
                     <div className="pr-4 space-y-2">
                       {selectedPackage.Contributors.length > 0 ? (

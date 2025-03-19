@@ -5,7 +5,7 @@ import { usePackage, usePackages } from "@/contexts/PackageContext"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { PackageButton } from "./PackageButton"
 import { PackageButtonSkeleton } from "./PackageButtonSkeleton"
-import { X, ChevronLeft, User, ArrowLeft } from 'lucide-react'
+import { X, ChevronLeft, User, ArrowRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -24,12 +24,40 @@ export function PackageFilters() {
   const [typeFilters, setTypeFilters] = useState({ r: true, p: true })
   const [isLoading, setIsLoading] = useState(true)
   const [selectedContributor, setSelectedContributor] = useState<Contributor | null>(null)
-  const [contributorPackages, setContributorPackages] = useState<Package[]>([])
+  const [contributorMap, setContributorMap] = useState<Record<string, Package[]>>({})
+  const [contributorSearchTerm, setContributorSearchTerm] = useState("")
+  const [sortedContributors, setSortedContributors] = useState<[string, Package[]][]>([])
 
-  const onClose = () => { setIsOpen(false) }
+  useEffect(() => {
+    const newContributorMap: Record<string, Package[]> = {}
+    packages.forEach((pkg) => {
+      pkg.Contributors.forEach((contributor) => {
+        if (!newContributorMap[contributor.Name]) {
+          newContributorMap[contributor.Name] = []
+        }
+        newContributorMap[contributor.Name].push(pkg)
+      })
+    })
+    setContributorMap(newContributorMap)
+  }, [packages])
+
+  useEffect(() => {
+    const sorted = Object.entries(contributorMap)
+      .sort((a, b) => b[1].length - a[1].length)
+      .filter(([contributor]) => contributor.toLowerCase().includes(contributorSearchTerm.toLowerCase()))
+
+    setSortedContributors(sorted)
+  }, [contributorMap, contributorSearchTerm])
+
+  const onClose = () => {
+    setIsOpen(false)
+  }
 
   const handleTypeFilterChange = (type: "r" | "p") => {
-    setTypeFilters((prev) => ({ ...prev, [type]: !prev[type] }))
+    setTypeFilters((prev) => {
+      const newFilters = { ...prev, [type]: !prev[type] }
+      return newFilters
+    })
   }
 
   const handlePackageClick = (packageDir: string) => {
@@ -42,88 +70,101 @@ export function PackageFilters() {
 
   const clearContributorSelection = () => {
     setSelectedContributor(null)
-    setContributorPackages([])
-    window.dispatchEvent(new CustomEvent("contributorSelect", { 
-      detail: { contributorName: null }
-    }))
+    window.dispatchEvent(
+      new CustomEvent("contributorSelect", {
+        detail: { contributorName: null },
+      }),
+    )
   }
 
   const fetchFilteredPackages = useCallback(async () => {
-    if (selectedContributor) return;
-    
     setIsLoading(true)
     try {
-      let rPackages: Package[] = []
-      let pPackages: Package[] = []
+      let results: Package[] = []
 
       if (typeFilters.r && typeFilters.p) {
-        setFilteredPackages(packages)
-      } else {
-        if (typeFilters.r) rPackages = await getFilteredPackages("r")
-        if (typeFilters.p) pPackages = await getFilteredPackages("p")
-        setFilteredPackages([...rPackages, ...pPackages])
+        results = [...packages]
+      } else if (typeFilters.r) {
+        try {
+          results = await getFilteredPackages("r")
+        } catch (error) {
+          console.error("Error fetching r packages:", error)
+          results = packages.filter((pkg) => pkg.Dir.startsWith("r/"))
+        }
+      } else if (typeFilters.p) {
+        try {
+          results = await getFilteredPackages("p")
+        } catch (error) {
+          console.error("Error fetching p packages:", error)
+          results = packages.filter((pkg) => pkg.Dir.startsWith("p/"))
+        }
       }
+
+      if (selectedContributor) {
+        results = results.filter((pkg) => pkg.Contributors.some((c) => c.Name === selectedContributor.Name))
+      }
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase()
+        results = results.filter((pkg) => pkg.Name.toLowerCase().includes(term) || pkg.Dir.toLowerCase().includes(term))
+      }
+
+      setFilteredPackages(results)
+      setDisplayedPackages(results)
     } catch (error) {
-      console.error("Error fetching packages:", error)
+      console.error("Error in fetchFilteredPackages:", error)
+      setFilteredPackages([])
+      setDisplayedPackages([])
     } finally {
       setIsLoading(false)
     }
-  }, [typeFilters, packages, selectedContributor])
+  }, [typeFilters, packages, selectedContributor, searchTerm])
 
   useEffect(() => {
     fetchFilteredPackages()
   }, [fetchFilteredPackages])
 
   useEffect(() => {
-    if (selectedContributor) {
-      // If a contributor is selected, we show their packages
-      setDisplayedPackages(contributorPackages)
+    if (searchTerm.trim() === "") {
+      setDisplayedPackages(filteredPackages)
     } else {
-      // Otherwise, apply normal filtering
+      const term = searchTerm.toLowerCase()
       const filtered = filteredPackages.filter(
-        (pkg) =>
-        pkg.Dir.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pkg.Creator.toLowerCase().includes(searchTerm.toLowerCase())
+        (pkg) => pkg.Name.toLowerCase().includes(term) || pkg.Dir.toLowerCase().includes(term),
       )
       setDisplayedPackages(filtered)
     }
-  }, [searchTerm, filteredPackages, selectedContributor, contributorPackages])
+  }, [searchTerm, filteredPackages])
 
-  // Listen for contributor select events
   useEffect(() => {
     const handleContributorSelectEvent = (event: CustomEvent) => {
-      const contributorName = event.detail.contributorName;
-      
-      if (!contributorName) {
-        clearContributorSelection();
-        return;
-      }
-      
-      // Find all packages this contributor has worked on
-      const packagesWorkedOn: Package[] = [];
-      let contributor: Contributor | null = null;
-      
-      packages.forEach(pkg => {
-        const foundContributor = pkg.Contributors.find(c => c.Name === contributorName);
-        if (foundContributor) {
-          packagesWorkedOn.push(pkg);
-          if (!contributor) {
-            contributor = foundContributor;
-          }
-        }
-      });
-      
-      setSelectedContributor(contributor);
-      setContributorPackages(packagesWorkedOn);
-      setIsOpen(true); // Make sure the filter panel is open
-    };
+      const contributorName = event.detail.contributorName
 
-    window.addEventListener("contributorSelect", handleContributorSelectEvent as EventListener);
+      if (!contributorName) {
+        clearContributorSelection()
+        return
+      }
+
+      let foundContributor: Contributor | null = null
+      for (const pkg of packages) {
+        const contributor = pkg.Contributors.find((c) => c.Name === contributorName)
+        if (contributor) {
+          foundContributor = contributor
+          break
+        }
+      }
+
+      setSelectedContributor(foundContributor)
+      fetchFilteredPackages()
+      setIsOpen(true)
+    }
+
+    window.addEventListener("contributorSelect", handleContributorSelectEvent as EventListener)
 
     return () => {
-      window.removeEventListener("contributorSelect", handleContributorSelectEvent as EventListener);
-    };
-  }, [packages]);
+      window.removeEventListener("contributorSelect", handleContributorSelectEvent as EventListener)
+    }
+  }, [packages, fetchFilteredPackages])
 
   return (
     <>
@@ -139,9 +180,7 @@ export function PackageFilters() {
             <Card className="h-full overflow-hidden flex flex-col bg-[#18181a] text-gray-300 border-[#18181a] shadow-lg">
               <CardHeader className="flex-shrink-0 py-3 px-4">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-100 truncate">
-                    {selectedContributor ? "Contributor Packages" : "Package Filters"}
-                  </h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-100 truncate">Package Filters</h2>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -152,75 +191,128 @@ export function PackageFilters() {
                   </Button>
                 </div>
               </CardHeader>
-              
-              {selectedContributor ? (
-                <>
-                  <div className="flex-shrink-0 px-4 pb-4">
-                    <Button 
-                      variant="ghost" 
-                      className="mb-2 text-gray-400 hover:bg-[#28282B] hover:text-gray-100"
-                      onClick={clearContributorSelection}
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back to all packages
-                    </Button>
-                    
-                    <div className="flex items-center bg-[#28282B] p-4 rounded-lg">
-                        <User className="h-6 w-6 mr-2 text-[#9c59b6]" />
-                        <h3 className="text-lg font-bold text-gray-100">{selectedContributor.Name}</h3>
+
+              <div className="flex-shrink-0 px-4 pb-2">
+                <div className="flex w-full max-w-sm items-center space-x-2 mb-2">
+                  <Input placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+                <div className="flex space-x-4 justify-center">
+                  <label className="flex items-center space-x-2">
+                    <Checkbox checked={typeFilters.r} onCheckedChange={() => handleTypeFilterChange("r")} />
+                    <span>Realms</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <Checkbox checked={typeFilters.p} onCheckedChange={() => handleTypeFilterChange("p")} />
+                    <span>Packages</span>
+                  </label>
+                </div>
+              </div>
+
+              <CardContent className="flex-grow overflow-hidden flex flex-col px-4 py-2">
+                <div className="mb-4">
+                  <h3 className="text-md font-semibold mb-2 text-gray-200">
+                    {selectedContributor
+                      ? `Packages by ${selectedContributor.Name}`
+                      : `All Packages (${displayedPackages.length})`}
+                  </h3>
+                  <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
+
+                  <ScrollArea className="h-[40vh]">
+                    <div className="grid grid-cols-1 gap-2 pr-2">
+                      {isLoading && !selectedContributor ? (
+                        Array.from({ length: 5 }).map((_, index) => <PackageButtonSkeleton key={index} />)
+                      ) : displayedPackages.length > 0 ? (
+                        displayedPackages.map((pkg, index) => (
+                          <PackageButton
+                            key={index}
+                            name={pkg.Name}
+                            dir={pkg.Dir}
+                            onClick={() => handlePackageClick(pkg.Dir)}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex items-center justify-center h-full py-4">
+                          <p className="text-gray-400">
+                            {selectedContributor
+                              ? "This contributor hasn't worked on any packages yet."
+                              : "No packages found. Try adjusting your search or filters."}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                <div className="mt-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-md font-semibold text-gray-200">Contributors</h3>
+                    <div className="flex items-center gap-2">
+                      {selectedContributor && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-gray-400 hover:bg-[#28282B] hover:text-gray-100 h-8 px-2"
+                          onClick={clearContributorSelection}
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Clear filter
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  
-                  <div className="px-4 pb-2">
-                    <h3 className="text-md font-semibold mb-2 text-gray-200">
-                      Packages ({contributorPackages.length})
-                    </h3>
-                    <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex-shrink-0 px-4 pb-2">
-                  <div className="flex w-full max-w-sm items-center space-x-2 mb-2">
-                    <Input placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                  </div>
-                  <div className="flex space-x-4 justify-center">
-                    <label className="flex items-center space-x-2">
-                      <Checkbox checked={typeFilters.r} onCheckedChange={() => handleTypeFilterChange("r")} />
-                      <span>Realms</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <Checkbox checked={typeFilters.p} onCheckedChange={() => handleTypeFilterChange("p")} />
-                      <span>Packages</span>
-                    </label>
-                  </div>
+                  <Input
+                    placeholder="Search contributors..."
+                    value={contributorSearchTerm}
+                    onChange={(e) => setContributorSearchTerm(e.target.value)}
+                    className="mb-2"
+                  />
+                  <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
+
+                  <ScrollArea className="h-[30vh]">
+                    <div className="grid grid-cols-1 gap-2 pr-2">
+                      {sortedContributors.map(([contributor, packages]) => {
+                        const isSelected = selectedContributor?.Name === contributor
+                        return (
+                          <Button
+                            key={contributor}
+                            variant="ghost"
+                            className={`w-full justify-between text-left py-2 px-3 ${
+                              isSelected
+                                ? "bg-[#3a3a3d] text-white hover:bg-[#444447]"
+                                : "bg-[#28282B] text-white hover:bg-[#3a3a3d] hover:text-white"
+                            } flex items-center`}
+                            onClick={() => {
+                              if (isSelected) {
+                                clearContributorSelection()
+                              } else {
+                                const foundContributor = packages[0]?.Contributors.find((c) => c.Name === contributor)
+                                setSelectedContributor(foundContributor || null)
+                                window.dispatchEvent(
+                                  new CustomEvent("contributorSelect", {
+                                    detail: { contributorName: contributor },
+                                  }),
+                                )
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <User className={`h-4 w-4 ${isSelected ? "text-white" : "text-[#9c59b6]"}`} />
+                              <span className="font-medium truncate">{contributor}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-400">{packages.length}</span>
+                              {isSelected ? (
+                                <Check className="h-3 w-3 text-[#9c59b6]" />
+                              ) : (
+                                <ArrowRight className="h-3 w-3 text-gray-400" />
+                              )}
+                            </div>
+                          </Button>
+                        )
+                      })}
+                    </div>
+                  </ScrollArea>
                 </div>
-              )}
-              
-              <CardContent className="flex-grow overflow-hidden flex flex-col px-4 py-2">
-                <ScrollArea className="h-full">
-                  <div className="pr-4 space-y-2">
-                    {isLoading && !selectedContributor ? (
-                      Array.from({ length: 5 }).map((_, index) => <PackageButtonSkeleton key={index} />)
-                    ) : displayedPackages.length > 0 ? (
-                      displayedPackages.map((pkg, index) => (
-                        <PackageButton
-                          key={index}
-                          name={pkg.Name}
-                          dir={pkg.Dir}
-                          onClick={() => handlePackageClick(pkg.Dir)}
-                        />
-                      ))
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <p className="text-gray-400">
-                          {selectedContributor 
-                            ? "This contributor hasn't worked on any packages yet." 
-                            : "No packages found. Try adjusting your search or filters."}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
               </CardContent>
             </Card>
           </motion.div>
@@ -239,3 +331,4 @@ export function PackageFilters() {
     </>
   )
 }
+
