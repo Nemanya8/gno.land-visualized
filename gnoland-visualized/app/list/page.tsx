@@ -9,6 +9,7 @@ import Link from "next/link"
 import { PackageFilters } from "./components/package-filters"
 import { SearchAndSort } from "./components/search-and-sort"
 import { PackageCard } from "./components/package-card"
+import { PackageSkeleton } from "./components/package-sekeleton"
 
 export default function PackageList() {
   const [packages, setPackages] = useState<Package[]>([])
@@ -197,14 +198,6 @@ export default function PackageList() {
     document.body.removeChild(link)
   }
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-64 text-white">Loading packages...</div>
-  }
-
-  if (error) {
-    return <div className="text-red-500 p-4">Error: {error}</div>
-  }
-
   const noMatchingPackages = filteredPackages.length === 0 && packages.length > 0
 
   return (
@@ -222,6 +215,7 @@ export default function PackageList() {
             <Button
               onClick={downloadCSV}
               className="flex items-center gap-2 bg-[#28282B] text-white hover:bg-[#3a3a3d] w-full sm:w-auto"
+              disabled={loading}
             >
               <Download size={16} />
               Download CSV
@@ -255,7 +249,9 @@ export default function PackageList() {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPackages.length > 0 ? (
+          {loading ? (
+            Array.from({ length: 9 }).map((_, index) => <PackageSkeleton key={`skeleton-${index}`} />)
+          ) : filteredPackages.length > 0 ? (
             filteredPackages.map((pkg) => (
               <PackageCard
                 key={`${pkg.Dir}-${pkg.Name}-${pkg.Creator || ""}`}
