@@ -5,12 +5,13 @@ import type { Package } from "@/types/Package"
 import { getPackages } from "./api/package-api"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown, ChevronUp, Download, PackageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import Image from "next/image"
+import { RangeSlider } from "@/components/ui/range-slider"
 
 export default function PackageList() {
   const [packages, setPackages] = useState<Package[]>([])
@@ -26,6 +27,9 @@ export default function PackageList() {
   const [importedCount, setImportedCount] = useState<number[]>([0, 0])
   const [maxImports, setMaxImports] = useState<number>(0)
   const [maxImported, setMaxImported] = useState<number>(0)
+
+  const [filterM, setFilterM] = useState<boolean>(true)
+  const [filterD, setFilterD] = useState<boolean>(true)
 
   useEffect(() => {
     if (fetchedRef.current) return
@@ -69,8 +73,12 @@ export default function PackageList() {
     const filtered = packages.filter((pkg) => {
       const isDirP = pkg.Dir?.startsWith("gno.land/p") || false
       const isDirR = pkg.Dir?.startsWith("gno.land/r") || false
+      const isMonorepo = pkg.Creator === "monorepo"
+      const isDeployed = pkg.Creator !== "monorepo"
 
-      const dirFilter = (filterP && isDirP) || (filterR && isDirR) || (!isDirP && !isDirR)
+      const typeFilter = (filterP && isDirP) || (filterR && isDirR)
+      const sourceFilter = (filterM && isMonorepo) || (filterD && isDeployed)
+      const dirFilter = (typeFilter && sourceFilter) || (!isDirP && !isDirR)
 
       const importsFilter = (pkg.Imports?.length || 0) >= importCount[0] && (pkg.Imports?.length || 0) <= importCount[1]
       const importedFilter =
@@ -79,7 +87,7 @@ export default function PackageList() {
       return dirFilter && importsFilter && importedFilter
     })
     setFilteredPackages(filtered)
-  }, [packages, filterP, filterR, importCount, importedCount])
+  }, [packages, filterP, filterR, filterM, filterD, importCount, importedCount])
 
   const toggleExpand = (pkg: Package) => {
     const uniqueId = `${pkg.Dir}-${pkg.Name}`
@@ -155,7 +163,7 @@ export default function PackageList() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <div className="flex gap-4">
+              <div className="flex gap-6">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="filter-p"
@@ -172,6 +180,22 @@ export default function PackageList() {
                   />
                   <Label htmlFor="filter-r">Realm</Label>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="filter-m"
+                    checked={filterM}
+                    onCheckedChange={(checked) => setFilterM(checked as boolean)}
+                  />
+                  <Label htmlFor="filter-m">Monorepo</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="filter-d"
+                    checked={filterD}
+                    onCheckedChange={(checked) => setFilterD(checked as boolean)}
+                  />
+                  <Label htmlFor="filter-d">Deployed</Label>
+                </div>
               </div>
             </div>
 
@@ -183,7 +207,7 @@ export default function PackageList() {
                   </Label>
                   <span className="text-sm text-gray-400">Max: {maxImports}</span>
                 </div>
-                <Slider
+                <RangeSlider
                   id="import-count"
                   min={0}
                   max={maxImports}
@@ -201,7 +225,7 @@ export default function PackageList() {
                   </Label>
                   <span className="text-sm text-gray-400">Max: {maxImported}</span>
                 </div>
-                <Slider
+                <RangeSlider
                   id="imported-count"
                   min={0}
                   max={maxImported}
@@ -262,8 +286,12 @@ export default function PackageList() {
                   <CardFooter className="flex flex-col items-start border-t border-gray-700 pt-4">
                     <div className="w-full space-y-3">
                       <div>
-                        <h3 className="text-sm font-medium text-gray-300">Creator</h3>
-                        <p className="text-sm text-gray-400">{pkg.Creator || "Not specified"}</p>
+                        {pkg.Creator !== "monorepo" && (
+                          <>
+                            <h3 className="text-sm font-medium text-gray-300">Creator</h3>
+                            <p className="text-sm text-gray-400">{pkg.Creator || "Not specified"}</p>
+                          </>
+                        )}
                       </div>
 
                       {pkg.Contributors && pkg.Contributors.length > 0 && (
@@ -317,6 +345,24 @@ export default function PackageList() {
                           </ScrollArea>
                         </div>
                       )}
+                    </div>
+                    <div className="w-full mt-4 flex gap-2">
+                      <Button
+                        className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
+                        onClick={() => window.open(`https://test5.${pkg.Dir}`, "_blank")}
+                      >
+                        <Image src="/gnoland.svg" alt="Gnoland" width={25} height={25} className="mr-2" />
+                        <span className="font-bold">See on Gnoweb</span>
+                      </Button>
+                      <Button
+                        className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
+                        onClick={() =>
+                          window.open(`https://gno.studio/connect/view/${pkg.Dir}?network=test5`, "_blank")
+                        }
+                      >
+                        <Image src="/gnostudio.svg" alt="Gno Studio" width={25} height={25} className="mr-2" />
+                        <span className="font-bold">See in Studio</span>
+                      </Button>
                     </div>
                   </CardFooter>
                 )}
