@@ -4,8 +4,10 @@ import { useEffect, useState, useCallback, useRef } from "react"
 import dynamic from "next/dynamic"
 import type { Package } from "@/types/Package"
 import { usePackage } from "@/contexts/PackageContext"
+import GraphHeader from "./graph-header"
 
 const ForceGraph3D = dynamic(() => import("react-force-graph").then((mod) => mod.ForceGraph3D), { ssr: false })
+const ForceGraph2D = dynamic(() => import("react-force-graph").then((mod) => mod.ForceGraph2D), { ssr: false })
 
 interface DependencyGraphProps {
   packages: Package[]
@@ -24,6 +26,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   const [importingNodes, setImportingNodes] = useState(new Set())
   const [contributorNodes, setContributorNodes] = useState(new Set())
   const [selectedContributor, setSelectedContributor] = useState<string | null>(null)
+  const [is3D, setIs3D] = useState(true)
   const { setSelectedPackage } = usePackage()
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
@@ -51,14 +54,14 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
       creator: pkg.Creator,
     }))
 
-    const links = packages.flatMap((pkg) =>
-      pkg.Imports.map((imp: string) => ({
-        source: pkg.Dir,
-        target: imp,
-      })),
-    ).filter(link => 
-      nodes.some(node => node.id === link.target)
-    )
+    const links = packages
+      .flatMap((pkg) =>
+        pkg.Imports.map((imp: string) => ({
+          source: pkg.Dir,
+          target: imp,
+        })),
+      )
+      .filter((link) => nodes.some((node) => node.id === link.target))
 
     const uniqueNodes = Array.from(new Map(nodes.map((node) => [node.id, node])).values())
 
@@ -217,31 +220,41 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
     }
   }, [])
 
+  const commonGraphProps = {
+    graphData,
+    nodeLabel: (node: any) => `${node.name} - ${node.creator}`,
+    nodeColor: updateNodeColor,
+    linkColor: updateLinkColor,
+    linkWidth: (link: any) => {
+      if (highlightLinks.has(link)) return 2
+      return 1
+    },
+    linkDirectionalParticles: 2,
+    linkDirectionalParticleWidth: (link: any) => {
+      if (highlightLinks.has(link)) return 2
+      return 0
+    },
+    onNodeClick: handleNodeClick,
+    backgroundColor: "#1a1a1a",
+  }
+
   return (
-    <div ref={containerRef} className="w-full h-screen">
-      {graphData.nodes.length > 0 && (
-        <ForceGraph3D
-          width={dimensions.width}
-          height={dimensions.height}
-          graphData={graphData}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          nodeLabel={(node: any) => `${node.name} - ${node.creator}`}
-          nodeColor={updateNodeColor}
-          linkColor={updateLinkColor}
-          linkWidth={(link) => {
-            if (highlightLinks.has(link)) return 2
-            return 1
-          }}
-          linkDirectionalParticles={2}
-          linkDirectionalParticleWidth={(link) => {
-            if (highlightLinks.has(link)) return 2
-            return 0
-          }}
-          onNodeClick={handleNodeClick}
-          backgroundColor="#1a1a1a"
-          nodeResolution={16}
-        />
-      )}
+    <div className="flex flex-col w-full h-screen">
+      <GraphHeader is3D={is3D} setIs3D={setIs3D} />
+
+      <div ref={containerRef} className="flex-1 relative">
+        {graphData.nodes.length > 0 &&
+          (is3D ? (
+            <ForceGraph3D
+              width={dimensions.width}
+              height={dimensions.height}
+              {...commonGraphProps}
+              nodeResolution={16}
+            />
+          ) : (
+            <ForceGraph2D width={dimensions.width} height={dimensions.height} {...commonGraphProps} />
+          ))}
+      </div>
     </div>
   )
 }
