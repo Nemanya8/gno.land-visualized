@@ -5,14 +5,15 @@ import { usePackage, usePackages } from "@/contexts/PackageContext"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { PackageButton } from "./PackageButton"
 import { PackageButtonSkeleton } from "./PackageButtonSkeleton"
-import { X, ChevronLeft, User, ArrowRight, Check } from "lucide-react"
+import { X, ChevronLeft, User, ArrowRight, Check, BarChart2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardContent } from "@/components/ui/card"
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { motion, AnimatePresence } from "framer-motion"
 import { getFilteredPackages } from "../api/package-api"
 import type { Package, Contributor } from "@/types/Package"
+import Link from "next/link"
 
 export function PackageFilters() {
   const { setSelectedPackage } = usePackage()
@@ -217,7 +218,7 @@ export function PackageFilters() {
                   </h3>
                   <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
 
-                  <ScrollArea className="h-[40vh]">
+                  <ScrollArea className="h-[35vh]">
                     <div className="grid grid-cols-1 gap-2 pr-2">
                       {isLoading && !selectedContributor ? (
                         Array.from({ length: 5 }).map((_, index) => <PackageButtonSkeleton key={index} />)
@@ -268,7 +269,7 @@ export function PackageFilters() {
                   />
                   <div className="w-full h-0.5 bg-[#9c59b6] mb-2"></div>
 
-                  <ScrollArea className="h-[30vh]">
+                  <ScrollArea className="h-[25vh]">
                     <div className="grid grid-cols-1 gap-2 pr-2">
                       {sortedContributors.map(([contributor, packages]) => {
                         const isSelected = selectedContributor?.Name === contributor
@@ -314,6 +315,14 @@ export function PackageFilters() {
                   </ScrollArea>
                 </div>
               </CardContent>
+              <CardFooter className="flex justify-center mt-4 px-4 pb-4">
+                <Link href="/list" className="w-full">
+                  <Button className="flex items-center gap-2 bg-[#28282B] text-white hover:bg-[#3a3a3d] w-full">
+                    <BarChart2 size={16} />
+                    Data Panel
+                  </Button>
+                </Link>
+              </CardFooter>
             </Card>
           </motion.div>
         )}
@@ -331,4 +340,3 @@ export function PackageFilters() {
     </>
   )
 }
-
