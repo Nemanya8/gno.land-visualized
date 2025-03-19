@@ -30,6 +30,7 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
   const { setSelectedPackage } = usePackage()
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graph2DRef = useRef<any>(null)
 
   useEffect(() => {
