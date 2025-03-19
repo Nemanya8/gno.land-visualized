@@ -11,7 +11,7 @@ interface GraphHeaderProps {
 
 export default function GraphHeader({ is3D, setIs3D }: GraphHeaderProps) {
   return (
-    <header className="flex items-center justify-between w-full h-[20vh] px-6 bg-[#1a1a1a] border-b border-gray-800">
+    <header className="flex items-center justify-between w-[20vw] px-6 bg-[#1a1a1a] border-b border-gray-800">
       <div className="flex-1 flex justify-start">
         <Button
           onClick={() => setIs3D(!is3D)}

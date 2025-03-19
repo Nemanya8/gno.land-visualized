@@ -268,8 +268,8 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
               {...commonGraphProps}
               onEngineStop={() => {
                 if (!is3D && graph2DRef.current) {
-                  graph2DRef.current.d3Force("charge")?.strength(-300);
-                  graph2DRef.current.d3Force("link")?.distance(100);
+                  graph2DRef.current.d3Force("charge")?.strength(-500);
+                  graph2DRef.current.d3Force("link")?.distance(200);
                   graph2DRef.current.refresh();
                 }
               }}
