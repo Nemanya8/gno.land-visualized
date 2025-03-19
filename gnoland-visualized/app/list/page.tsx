@@ -3,15 +3,12 @@
 import { useState, useEffect, useRef } from "react"
 import type { Package } from "@/types/Package"
 import { getPackages } from "./api/package-api"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { ChevronDown, ChevronUp, Download, PackageIcon } from "lucide-react"
+import { Download, BarChart2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import Image from "next/image"
-import { RangeSlider } from "@/components/ui/range-slider"
+import Link from "next/link"
+import { PackageFilters } from "./components/package-filters"
+import { SearchAndSort } from "./components/search-and-sort"
+import { PackageCard } from "./components/package-card"
 
 export default function PackageList() {
   const [packages, setPackages] = useState<Package[]>([])
@@ -30,6 +27,9 @@ export default function PackageList() {
 
   const [filterM, setFilterM] = useState<boolean>(true)
   const [filterD, setFilterD] = useState<boolean>(true)
+
+  const [searchTerm, setSearchTerm] = useState<string>("")
+  const [sortBy, setSortBy] = useState<string>("imported-desc")
 
   useEffect(() => {
     if (fetchedRef.current) return
@@ -70,7 +70,42 @@ export default function PackageList() {
   useEffect(() => {
     if (!packages || packages.length === 0) return
 
-    const filtered = packages.filter((pkg) => {
+    const preFilteredPackages = packages.filter((pkg) => {
+      const isDirP = pkg.Dir?.startsWith("gno.land/p") || false
+      const isDirR = pkg.Dir?.startsWith("gno.land/r") || false
+      const isMonorepo = pkg.Creator === "monorepo"
+      const isDeployed = pkg.Creator !== "monorepo"
+
+      const typeFilter = (filterP && isDirP) || (filterR && isDirR)
+      const sourceFilter = (filterM && isMonorepo) || (filterD && isDeployed)
+      const dirFilter = (typeFilter && sourceFilter) || (!isDirP && !isDirR)
+
+      const searchFilter =
+        searchTerm === "" ||
+        pkg.Name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pkg.Dir?.toLowerCase().includes(searchTerm.toLowerCase())
+
+      return dirFilter && searchFilter
+    })
+
+    const newMaxImports = Math.max(...preFilteredPackages.map((pkg) => pkg.Imports?.length || 0), 1)
+    const newMaxImported = Math.max(...preFilteredPackages.map((pkg) => pkg.Imported?.length || 0), 1)
+
+    if (newMaxImports !== maxImports) {
+      setMaxImports(newMaxImports)
+      if (importCount[1] > newMaxImports) {
+        setImportCount([importCount[0], newMaxImports])
+      }
+    }
+
+    if (newMaxImported !== maxImported) {
+      setMaxImported(newMaxImported)
+      if (importedCount[1] > newMaxImported) {
+        setImportedCount([importedCount[0], newMaxImported])
+      }
+    }
+
+    let filtered = packages.filter((pkg) => {
       const isDirP = pkg.Dir?.startsWith("gno.land/p") || false
       const isDirR = pkg.Dir?.startsWith("gno.land/r") || false
       const isMonorepo = pkg.Creator === "monorepo"
@@ -84,10 +119,35 @@ export default function PackageList() {
       const importedFilter =
         (pkg.Imported?.length || 0) >= importedCount[0] && (pkg.Imported?.length || 0) <= importedCount[1]
 
-      return dirFilter && importsFilter && importedFilter
+      const searchFilter =
+        searchTerm === "" ||
+        pkg.Name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pkg.Dir?.toLowerCase().includes(searchTerm.toLowerCase())
+
+      return dirFilter && importsFilter && importedFilter && searchFilter
     })
+
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "imports-asc":
+          return (a.Imports?.length || 0) - (b.Imports?.length || 0)
+        case "imports-desc":
+          return (b.Imports?.length || 0) - (a.Imports?.length || 0)
+        case "imported-asc":
+          return (a.Imported?.length || 0) - (b.Imported?.length || 0)
+        case "imported-desc":
+          return (b.Imported?.length || 0) - (a.Imported?.length || 0)
+        case "alpha-asc":
+          return (a.Name || "").localeCompare(b.Name || "")
+        case "alpha-desc":
+          return (b.Name || "").localeCompare(a.Name || "")
+        default:
+          return (b.Imported?.length || 0) - (a.Imported?.length || 0)
+      }
+    })
+
     setFilteredPackages(filtered)
-  }, [packages, filterP, filterR, filterM, filterD, importCount, importedCount])
+  }, [packages, filterP, filterR, filterM, filterD, importCount, importedCount, searchTerm, sortBy])
 
   const toggleExpand = (pkg: Package) => {
     const uniqueId = `${pkg.Dir}-${pkg.Name}`
@@ -150,223 +210,59 @@ export default function PackageList() {
   return (
     <div className="min-h-screen bg-[#18181a] text-white">
       <div className="container mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold">Data Panel</h1>
-          <Button onClick={downloadCSV} className="flex items-center gap-2 bg-[#28282B] text-white hover:bg-[#3a3a3d]">
-            <Download size={16} />
-            Download CSV
-          </Button>
-        </div>
-
-        <div className="bg-[#28282B] border border-[#28282B] rounded-lg p-4 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Filters</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="flex gap-6">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="filter-p"
-                    checked={filterP}
-                    onCheckedChange={(checked) => setFilterP(checked as boolean)}
-                  />
-                  <Label htmlFor="filter-p">Package</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="filter-r"
-                    checked={filterR}
-                    onCheckedChange={(checked) => setFilterR(checked as boolean)}
-                  />
-                  <Label htmlFor="filter-r">Realm</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="filter-m"
-                    checked={filterM}
-                    onCheckedChange={(checked) => setFilterM(checked as boolean)}
-                  />
-                  <Label htmlFor="filter-m">Monorepo</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="filter-d"
-                    checked={filterD}
-                    onCheckedChange={(checked) => setFilterD(checked as boolean)}
-                  />
-                  <Label htmlFor="filter-d">Deployed</Label>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-2">
-                  <Label htmlFor="import-count">
-                    Imports range: {importCount[0]} - {importCount[1]}
-                  </Label>
-                  <span className="text-sm text-gray-400">Max: {maxImports}</span>
-                </div>
-                <RangeSlider
-                  id="import-count"
-                  min={0}
-                  max={maxImports}
-                  step={1}
-                  value={importCount}
-                  onValueChange={(value) => setImportCount(value)}
-                  className="mb-6"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between mb-2">
-                  <Label htmlFor="imported-count">
-                    Imported by range: {importedCount[0]} - {importedCount[1]}
-                  </Label>
-                  <span className="text-sm text-gray-400">Max: {maxImported}</span>
-                </div>
-                <RangeSlider
-                  id="imported-count"
-                  min={0}
-                  max={maxImported}
-                  step={1}
-                  value={importedCount}
-                  onValueChange={(value) => setImportedCount(value)}
-                  className="mb-2"
-                />
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+            <Link href="/graph" className="w-full sm:w-auto">
+              <Button className="flex items-center gap-2 bg-[#28282B] text-white hover:bg-[#3a3a3d] w-full sm:w-auto">
+                <BarChart2 size={16} />
+                Graph
+              </Button>
+            </Link>
+            <Button
+              onClick={downloadCSV}
+              className="flex items-center gap-2 bg-[#28282B] text-white hover:bg-[#3a3a3d] w-full sm:w-auto"
+            >
+              <Download size={16} />
+              Download CSV
+            </Button>
           </div>
         </div>
+
+        <PackageFilters
+          filterP={filterP}
+          setFilterP={setFilterP}
+          filterR={filterR}
+          setFilterR={setFilterR}
+          filterM={filterM}
+          setFilterM={setFilterM}
+          filterD={filterD}
+          setFilterD={setFilterD}
+          importCount={importCount}
+          setImportCount={setImportCount}
+          importedCount={importedCount}
+          setImportedCount={setImportedCount}
+          maxImports={maxImports}
+          maxImported={maxImported}
+        />
+
+        <SearchAndSort
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          loading={loading}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPackages.length > 0 ? (
             filteredPackages.map((pkg) => (
-              <Card
+              <PackageCard
                 key={`${pkg.Dir}-${pkg.Name}-${pkg.Creator || ""}`}
-                className="overflow-hidden bg-[#28282B] border-[#28282B]"
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2 text-white">
-                        <PackageIcon className="h-5 w-5" />
-                        {pkg.Name}
-                      </CardTitle>
-                      <CardDescription className="truncate mt-1 text-gray-400">{pkg.Dir}</CardDescription>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleExpand(pkg)}
-                      className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-[#3a3a3d]"
-                    >
-                      {expandedPackages.includes(`${pkg.Dir}-${pkg.Name}`) ? <ChevronUp /> : <ChevronDown />}
-                    </Button>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pb-2">
-                  <div className="flex gap-2 mb-2">
-                    <Badge variant="outline" className="text-xs bg-transparent text-gray-300 border-gray-600">
-                      Imports: {pkg.Imports.length}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs bg-transparent text-gray-300 border-gray-600">
-                      Imported by: {pkg.Imported.length}
-                    </Badge>
-                    {pkg.Draft && (
-                      <Badge variant="secondary" className="text-xs bg-gray-700 text-gray-300">
-                        Draft
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-
-                {expandedPackages.includes(`${pkg.Dir}-${pkg.Name}`) && (
-                  <CardFooter className="flex flex-col items-start border-t border-gray-700 pt-4">
-                    <div className="w-full space-y-3">
-                      <div>
-                        {pkg.Creator !== "monorepo" && (
-                          <>
-                            <h3 className="text-sm font-medium text-gray-300">Creator</h3>
-                            <p className="text-sm text-gray-400">{pkg.Creator || "Not specified"}</p>
-                          </>
-                        )}
-                      </div>
-
-                      {pkg.Contributors && pkg.Contributors.length > 0 && (
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-300">Contributors</h3>
-                          <ul className="text-sm text-gray-400">
-                            {pkg.Contributors.map((contributor, index) => (
-                              <li key={index} className="flex justify-between">
-                                <span>{contributor.Name}</span>
-                                <span>{contributor.Percentage}%</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {pkg.Imports.length > 0 && (
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-300">Imports</h3>
-                          <ScrollArea className="h-24 w-full mt-1 rounded border border-bg-[#3a3a3d] p-2">
-                            <div className="flex flex-wrap gap-1">
-                              {pkg.Imports.map((imp, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="text-xs bg-[#3a3a3d] text-gray-300 hover:bg-[#3a3a3d]"
-                                >
-                                  {imp}
-                                </Badge>
-                              ))}
-                            </div>
-                          </ScrollArea>
-                        </div>
-                      )}
-
-                      {pkg.Imported.length > 0 && (
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-300">Imported by</h3>
-                          <ScrollArea className="h-24 w-full mt-1 rounded border border-bg-[#3a3a3d] p-2">
-                            <div className="flex flex-wrap gap-1">
-                              {pkg.Imported.map((imp, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="text-xs bg-[#3a3a3d] text-gray-300 hover:bg-[#3a3a3d]"
-                                >
-                                  {imp}
-                                </Badge>
-                              ))}
-                            </div>
-                          </ScrollArea>
-                        </div>
-                      )}
-                    </div>
-                    <div className="w-full mt-4 flex gap-2">
-                      <Button
-                        className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
-                        onClick={() => window.open(`https://test5.${pkg.Dir}`, "_blank")}
-                      >
-                        <Image src="/gnoland.svg" alt="Gnoland" width={25} height={25} className="mr-2" />
-                        <span className="font-bold">See on Gnoweb</span>
-                      </Button>
-                      <Button
-                        className="flex-1 bg-[#28282B] hover:bg-[#3a3a3d] text-gray-100 text-xs sm:text-sm"
-                        onClick={() =>
-                          window.open(`https://gno.studio/connect/view/${pkg.Dir}?network=test5`, "_blank")
-                        }
-                      >
-                        <Image src="/gnostudio.svg" alt="Gno Studio" width={25} height={25} className="mr-2" />
-                        <span className="font-bold">See in Studio</span>
-                      </Button>
-                    </div>
-                  </CardFooter>
-                )}
-              </Card>
+                pkg={pkg}
+                isExpanded={expandedPackages.includes(`${pkg.Dir}-${pkg.Name}`)}
+                onToggleExpand={() => toggleExpand(pkg)}
+              />
             ))
           ) : (
             <div className="col-span-full text-center py-8 text-gray-300">
