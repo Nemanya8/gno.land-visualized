@@ -42,6 +42,7 @@ export default function PackageList() {
 
         if (!fetchedPackages || fetchedPackages.length === 0) {
           setError("No packages returned from API")
+          console.log(error)
           setLoading(false)
           return
         }
