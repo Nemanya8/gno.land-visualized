@@ -16,9 +16,10 @@ export default function PackageList() {
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  const [expandedPackage, setExpandedPackage] = useState<string | null>(null)
+  const [expandedPackages, setExpandedPackages] = useState<string[]>([])
   const fetchedRef = useRef(false)
 
+  // Filter states
   const [filterP, setFilterP] = useState<boolean>(true)
   const [filterR, setFilterR] = useState<boolean>(true)
   const [importCount, setImportCount] = useState<number>(0)
@@ -27,16 +28,30 @@ export default function PackageList() {
   const [maxImported, setMaxImported] = useState<number>(0)
 
   useEffect(() => {
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL)
+  }, [])
+
+  useEffect(() => {
     if (fetchedRef.current) return
 
     const fetchPackages = async () => {
       try {
         fetchedRef.current = true
+        console.log("Fetching packages from:", `${process.env.NEXT_PUBLIC_API_URL}/getAllPackages`)
         const fetchedPackages = await getPackages()
-        setPackages(fetchedPackages)
+        console.log("Fetched packages:", fetchedPackages)
 
-        const maxImportsValue = Math.max(...fetchedPackages.map((pkg) => pkg.Imports.length))
-        const maxImportedValue = Math.max(...fetchedPackages.map((pkg) => pkg.Imported.length))
+        if (!fetchedPackages || fetchedPackages.length === 0) {
+          setError("No packages returned from API")
+          setLoading(false)
+          return
+        }
+
+        setPackages(fetchedPackages)
+        setFilteredPackages(fetchedPackages)
+
+        const maxImportsValue = Math.max(...fetchedPackages.map((pkg) => pkg.Imports?.length || 0), 1)
+        const maxImportedValue = Math.max(...fetchedPackages.map((pkg) => pkg.Imported?.length || 0), 1)
 
         setMaxImports(maxImportsValue)
         setMaxImported(maxImportedValue)
@@ -44,7 +59,8 @@ export default function PackageList() {
         setImportCount(0)
         setImportedCount(0)
       } catch (error) {
-        setError("Failed to fetch packages: " + error)
+        console.error("Error fetching packages:", error)
+        setError(`Failed to fetch packages: ${error}`)
       } finally {
         setLoading(false)
       }
@@ -54,26 +70,37 @@ export default function PackageList() {
   }, [])
 
   useEffect(() => {
-    if (packages.length === 0) return
+    if (!packages || packages.length === 0) return
+
+    console.log("Applying filters:", { filterP, filterR, importCount, importedCount })
+    console.log("Total packages before filtering:", packages.length)
 
     const filtered = packages.filter((pkg) => {
-      const dirFilter = (filterP && pkg.Dir.startsWith("gno.land/p")) || (filterR && pkg.Dir.startsWith("gno.land/r"))
+      const isDirP = pkg.Dir?.startsWith("/p") || false
+      const isDirR = pkg.Dir?.startsWith("/r") || false
 
-      const importsFilter = pkg.Imports.length >= importCount
-      const importedFilter = pkg.Imported.length >= importedCount
+      const dirFilter = (filterP && isDirP) || (filterR && isDirR) || (!isDirP && !isDirR) // Include packages that don't start with /p or /r
+
+      const importsFilter = (pkg.Imports?.length || 0) >= importCount
+      const importedFilter = (pkg.Imported?.length || 0) >= importedCount
 
       return dirFilter && importsFilter && importedFilter
     })
 
+    console.log("Filtered packages:", filtered.length)
     setFilteredPackages(filtered)
   }, [packages, filterP, filterR, importCount, importedCount])
 
-  const toggleExpand = (dir: string) => {
-    if (expandedPackage === dir) {
-      setExpandedPackage(null)
-    } else {
-      setExpandedPackage(dir)
-    }
+  const toggleExpand = (pkg: Package) => {
+    const uniqueId = `${pkg.Dir}-${pkg.Name}`
+
+    setExpandedPackages((prev) => {
+      if (prev.includes(uniqueId)) {
+        return prev.filter((id) => id !== uniqueId)
+      } else {
+        return [...prev, uniqueId]
+      }
+    })
   }
 
   if (loading) {
@@ -84,11 +111,12 @@ export default function PackageList() {
     return <div className="text-red-500 p-4">Error: {error}</div>
   }
 
+  const noMatchingPackages = filteredPackages.length === 0 && packages.length > 0
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Package List</h1>
 
-      {/* Filters */}
       <div className="bg-card border rounded-lg p-4 mb-6">
         <h2 className="text-lg font-semibold mb-4">Filters</h2>
 
@@ -152,7 +180,7 @@ export default function PackageList() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredPackages.length > 0 ? (
           filteredPackages.map((pkg) => (
-            <Card key={pkg.Dir} className="overflow-hidden">
+            <Card key={`${pkg.Dir}-${pkg.Name}-${pkg.Creator || ""}`} className="overflow-hidden">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
@@ -162,8 +190,8 @@ export default function PackageList() {
                     </CardTitle>
                     <CardDescription className="truncate mt-1">{pkg.Dir}</CardDescription>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => toggleExpand(pkg.Dir)} className="h-8 w-8 p-0">
-                    {expandedPackage === pkg.Dir ? <ChevronUp /> : <ChevronDown />}
+                  <Button variant="ghost" size="sm" onClick={() => toggleExpand(pkg)} className="h-8 w-8 p-0">
+                    {expandedPackages.includes(`${pkg.Dir}-${pkg.Name}`) ? <ChevronUp /> : <ChevronDown />}
                   </Button>
                 </div>
               </CardHeader>
@@ -184,7 +212,7 @@ export default function PackageList() {
                 </div>
               </CardContent>
 
-              {expandedPackage === pkg.Dir && (
+              {expandedPackages.includes(`${pkg.Dir}-${pkg.Name}`) && (
                 <CardFooter className="flex flex-col items-start border-t pt-4">
                   <div className="w-full space-y-3">
                     <div>
@@ -237,7 +265,11 @@ export default function PackageList() {
             </Card>
           ))
         ) : (
-          <div className="col-span-full text-center py-8">No packages match the current filters</div>
+          <div className="col-span-full text-center py-8">
+            {noMatchingPackages
+              ? "No packages match the current filters. Try adjusting your filters."
+              : "No packages available. Check your API connection."}
+          </div>
         )}
       </div>
     </div>
