@@ -33,9 +33,6 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
 
   useEffect(() => {
     const importCounts: { [key: string]: number } = {}
-
-    console.log(packages)
-
     packages.forEach((pkg) => {
       pkg.Imports.forEach((imp) => {
         if (!importCounts[imp]) {
@@ -222,14 +219,17 @@ export default function DependencyGraph({ packages }: DependencyGraphProps) {
 
   const commonGraphProps = {
     graphData,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     nodeLabel: (node: any) => `${node.name} - ${node.creator}`,
     nodeColor: updateNodeColor,
     linkColor: updateLinkColor,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     linkWidth: (link: any) => {
       if (highlightLinks.has(link)) return 2
       return 1
     },
     linkDirectionalParticles: 2,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     linkDirectionalParticleWidth: (link: any) => {
       if (highlightLinks.has(link)) return 2
       return 0
